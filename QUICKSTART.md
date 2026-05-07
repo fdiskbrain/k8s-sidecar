@@ -120,9 +120,9 @@ kubectl get pods -l app=myapp
 # 查看 Sidecar 日志
 kubectl logs <pod-name> -c configmap-sidecar
 
-# 进入主容器查看配置文件
-kubectl exec -it <pod-name> -c main-app -- ls -la /etc/config/default/test-config/
-kubectl exec -it <pod-name> -c main-app -- cat /etc/config/default/test-config/app.conf
+# 进入主容器查看配置文件（现在文件直接在输出根目录）
+kubectl exec -it <pod-name> -c main-app -- ls -la /etc/config/
+kubectl exec -it <pod-name> -c main-app -- cat /etc/config/app.conf
 ```
 
 ## 步骤 4: 测试动态更新
@@ -164,8 +164,8 @@ kubectl logs -f <pod-name> -c configmap-sidecar
 
 ### 验证文件已更新
 
-```bash
-kubectl exec -it <pod-name> -c main-app -- cat /etc/config/default/test-config/app.conf
+```
+kubectl exec -it <pod-name> -c main-app -- cat /etc/config/app.conf
 ```
 
 应该看到更新后的内容。

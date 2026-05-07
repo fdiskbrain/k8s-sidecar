@@ -93,17 +93,17 @@ mkdir -p /tmp/test-sidecar-output
 - [ ] 文件正确写入到 `/tmp/test-sidecar-output/test-sidecar/test-config-1/`
 
 #### 1.4 验证文件内容
-```bash
+```
 # 检查目录结构
-ls -la /tmp/test-sidecar-output/test-sidecar/test-config-1/
+ls -la /tmp/test-sidecar-output/
 
 # 验证文件内容
-cat /tmp/test-sidecar-output/test-sidecar/test-config-1/config.yaml
-cat /tmp/test-sidecar-output/test-sidecar/test-config-1/settings.json
+cat /tmp/test-sidecar-output/config.yaml
+cat /tmp/test-sidecar-output/settings.json
 ```
 
 **验收标准**:
-- [ ] 目录结构正确: `{namespace}/{configmap-name}/{keys}`
+- [ ] 文件直接在输出根目录: `{keys}`
 - [ ] 文件内容与 ConfigMap data 一致
 - [ ] 文件格式正确
 
@@ -192,7 +192,7 @@ EOF
 **验收标准**:
 - [ ] 两个命名空间的 Informer 都启动
 - [ ] 两个 ConfigMap 都被同步
-- [ ] 目录结构区分不同命名空间
+- [ ] 所有文件在输出根目录（注意：扁平结构下不同ConfigMap的同名key会覆盖）
 
 #### 4.3 验证目录结构
 ```bash

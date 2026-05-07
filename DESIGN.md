@@ -199,16 +199,14 @@ func buildLabelSelector(labels map[string]string) string {
 **目录结构**:
 ```
 {OutputDir}/
-├── {namespace}/
-│   └── {configmap-name}/
-│       ├── key1 → 文件内容
-│       ├── key2 → 文件内容
-│       └── ...
+├── key1 → 文件内容 (来自 ConfigMap)
+├── key2 → 文件内容 (来自 ConfigMap)
+└── ...
 ```
 
 **文件写入规则**:
-1. 每个 ConfigMap 对应一个子目录 `{namespace}/{configmap-name}`
-2. ConfigMap 的每个 key 对应目录下的一个文件
+1. 所有 ConfigMap 的 key 直接写入 `{OutputDir}` 根目录
+2. ConfigMap 的每个 key 对应根目录下的一个文件
 3. 文件名 = key，文件内容 = data[key]
 4. 覆盖写入，不备份旧文件
 5. 原子写入（先写临时文件，再重命名）

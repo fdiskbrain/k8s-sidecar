@@ -109,7 +109,7 @@ k8s-sidecar/
 
 ### 2. Key 作为文件名
 - ConfigMap 的每个 key 映射为独立文件
-- 目录结构: `{OutputDir}/{namespace}/{configmap-name}/{key}`
+- 目录结构: `{OutputDir}/{key}`（扁平结构）
 - 支持 Data 和 BinaryData
 
 ### 3. 覆盖写入策略

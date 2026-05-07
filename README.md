@@ -134,17 +134,15 @@ logLevel: "info"
 
 ```
 {OutputDir}/
-├── {namespace}/
-│   └── {configmap-name}/
-│       ├── key1 → 文件内容
-│       ├── key2 → 文件内容
-│       └── ...
+├── key1 → 文件内容 (来自 ConfigMap)
+├── key2 → 文件内容 (来自 ConfigMap)
+└── ...
 ```
 
 ### 示例
 
 ConfigMap:
-```yaml
+```
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -160,10 +158,8 @@ data:
 同步后的文件:
 ```
 /etc/config/
-└── default/
-    └── my-config/
-        ├── app.conf
-        └── config.json
+├── app.conf
+└── config.json
 ```
 
 ## 开发
