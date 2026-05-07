@@ -1,0 +1,28 @@
+# Role: 允许读取 ConfigMap
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: configmap-watcher
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+
+---
+# RoleBinding: 绑定到 ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: configmap-watcher-binding
+  namespace: default
+roleRef:
+  kind: Role
+  name: configmap-watcher
+subjects:
+- kind: ServiceAccount
+  name: default
+
+---
+# 如果监控多个命名空间，需要在每个命名空间创建 Role 和 RoleBinding
+# 或者使用 ClusterRole 和 ClusterRoleBinding（需要更严格的权限控制）

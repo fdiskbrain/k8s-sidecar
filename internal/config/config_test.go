@@ -1,0 +1,131 @@
+package config
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestLoadConfig(t *testing.T) {
+	// 创建临时配置文件
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "test-config.yaml")
+
+	content := `
+kubeconfig: "/path/to/kubeconfig"
+namespaces:
+  - default
+  - production
+labelSelector:
+  app: myapp
+  type: config
+outputDir: "/tmp/config"
+resyncPeriod: "5m"
+logLevel: "debug"
+`
+	err := os.WriteFile(configFile, []byte(content), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create temp config file: %v", err)
+	}
+
+	// 加载配置
+	cfg, err := LoadConfig(configFile)
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
+
+	// 验证配置
+	if cfg.KubeConfig != "/path/to/kubeconfig" {
+		t.Errorf("Expected kubeconfig '/path/to/kubeconfig', got '%s'", cfg.KubeConfig)
+	}
+
+	if len(cfg.Namespaces) != 2 {
+		t.Errorf("Expected 2 namespaces, got %d", len(cfg.Namespaces))
+	}
+
+	if cfg.LabelSelector["app"] != "myapp" {
+		t.Errorf("Expected label selector app=myapp, got %v", cfg.LabelSelector)
+	}
+
+	if cfg.OutputDir != "/tmp/config" {
+		t.Errorf("Expected output dir '/tmp/config', got '%s'", cfg.OutputDir)
+	}
+
+	if cfg.ResyncPeriod != 5*time.Minute {
+		t.Errorf("Expected resync period 5m, got %v", cfg.ResyncPeriod)
+	}
+
+	if cfg.LogLevel != "debug" {
+		t.Errorf("Expected log level 'debug', got '%s'", cfg.LogLevel)
+	}
+}
+
+func TestBuildLabelSelectorString(t *testing.T) {
+	cfg := &Config{
+		LabelSelector: map[string]string{
+			"app":  "myapp",
+			"type": "config",
+		},
+	}
+
+	result := cfg.BuildLabelSelectorString()
+	
+	// 结果应该包含两个选择器（顺序可能不同）
+	if result != "app=myapp,type=config" && result != "type=config,app=myapp" {
+		t.Errorf("Expected 'app=myapp,type=config' or 'type=config,app=myapp', got '%s'", result)
+	}
+}
+
+func TestIsAllNamespaces(t *testing.T) {
+	cfg1 := &Config{
+		Namespaces: []string{"*"},
+	}
+	if !cfg1.IsAllNamespaces() {
+		t.Error("Expected IsAllNamespaces to return true for '*'")
+	}
+
+	cfg2 := &Config{
+		Namespaces: []string{"default", "production"},
+	}
+	if cfg2.IsAllNamespaces() {
+		t.Error("Expected IsAllNamespaces to return false for specific namespaces")
+	}
+}
+
+func TestValidateConfig(t *testing.T) {
+	// 有效配置
+	validCfg := &Config{
+		LabelSelector: map[string]string{"app": "myapp"},
+		Namespaces:    []string{"default"},
+		OutputDir:     "/etc/config",
+		ResyncPeriod:  10 * time.Minute,
+		LogLevel:      "info",
+	}
+	if err := validateConfig(validCfg); err != nil {
+		t.Errorf("Expected valid config to pass validation: %v", err)
+	}
+
+	// 缺少 LabelSelector
+	invalidCfg1 := &Config{
+		Namespaces:   []string{"default"},
+		OutputDir:    "/etc/config",
+		ResyncPeriod: 10 * time.Minute,
+		LogLevel:     "info",
+	}
+	if err := validateConfig(invalidCfg1); err == nil {
+		t.Error("Expected validation to fail for missing label selector")
+	}
+
+	// 空的命名空间列表
+	invalidCfg2 := &Config{
+		LabelSelector: map[string]string{"app": "myapp"},
+		Namespaces:    []string{},
+		OutputDir:     "/etc/config",
+		ResyncPeriod:  10 * time.Minute,
+		LogLevel:      "info",
+	}
+	if err := validateConfig(invalidCfg2); err == nil {
+		t.Error("Expected validation to fail for empty namespaces")
+	}
+}

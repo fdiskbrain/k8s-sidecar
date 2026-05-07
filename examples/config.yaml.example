@@ -1,0 +1,23 @@
+# K8s ConfigMap Sidecar 配置示例
+
+# kubeconfig 路径（空字符串表示使用 in-cluster 模式）
+kubeconfig: ""
+
+# 要监控的命名空间列表
+namespaces: 
+  -  monitoring
+#  - production
+
+# Label 选择器
+labelSelector:
+  app.kubernetes.io/name: grafana
+# type: config
+
+# 配置文件输出目录
+outputDir: "/tmp/config"
+
+# Informer 重新同步周期
+resyncPeriod: "10m"
+
+# 日志级别 (debug, info, warn, error)
+logLevel: "info"

@@ -1,93 +1,258 @@
-# K8s Sidecar
+# K8s ConfigMap Sidecar
 
+一个基于 Kubernetes Informer 机制的 ConfigMap 同步工具，以 Sidecar 容器模式运行，自动将 ConfigMap 同步到本地文件系统。
 
+## 功能特性
 
-## Getting started
+- ✅ **高效监听**: 使用 Kubernetes Informer 机制，减少 API Server 压力
+- ✅ **Label 选择器**: 基于 Label 动态发现和监控 ConfigMap
+- ✅ **多命名空间**: 支持监控多个或所有命名空间
+- ✅ **原子写入**: 使用临时文件 + rename 确保文件一致性
+- ✅ **双模式认证**: 支持 In-Cluster 和 kubeconfig 两种模式
+- ✅ **实时同步**: ConfigMap 变化时自动更新文件系统
+- ✅ **结构化日志**: JSON 格式日志，便于日志收集和分析
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## 前置要求
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **Go 1.25+**
+- Kubernetes 集群（用于测试）或本地 kubeconfig
+- Docker（可选，用于容器化部署）
 
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 架构设计
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.fbdn.xyz/infra/k8s-sidecar.git
-git branch -M main
-git push -uf origin main
+┌─────────────────────────────────────────┐
+│           Pod                           │
+│                                         │
+│  ┌──────────────┐    ┌──────────────┐  │
+│  │   Main App   │    │   Sidecar    │  │
+│  │   Container  │    │  Container   │  │
+│  │              │◄───│  File Sync   │  │
+│  └──────────────┘    └──────┬───────┘  │
+└─────────────────────────────┼──────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │  Kubernetes API   │
+                    │      Server       │
+                    └───────────────────┘
 ```
 
-## Integrate with your tools
+## 快速开始
 
-* [Set up project integrations](https://gitlab.fbdn.xyz/infra/k8s-sidecar/-/settings/integrations)
+### 1. 构建
 
-## Collaborate with your team
+```bash
+# 下载依赖
+make deps
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+# 编译
+make build
+```
 
-## Test and Deploy
+### 2. 运行
 
-Use the built-in continuous integration in GitLab.
+```bash
+# 使用命令行参数
+./bin/k8s-configmap-sidecar \
+  --namespaces=default,production \
+  --label-selector=app=myapp,type=config \
+  --output-dir=/etc/config \
+  --log-level=info
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+# 或使用配置文件
+./bin/k8s-configmap-sidecar --config=/etc/sidecar/config.yaml
 
-***
+# 使用 kubeconfig 文件（本地开发）
+./bin/k8s-configmap-sidecar \
+  --kubeconfig=$HOME/.kube/config \
+  --namespaces=default \
+  --label-selector=app=myapp
+```
 
-# Editing this README
+### 3. Docker 构建
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+# 构建镜像
+make docker-build VERSION=latest
 
-## Suggestions for a good README
+# 或直接使用 Dockerfile
+docker build -t k8s-configmap-sidecar:latest .
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 4. Kubernetes 部署
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+# 应用 RBAC
+kubectl apply -f examples/rbac.yaml
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+# 部署应用
+kubectl apply -f examples/deployment.yaml
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## 配置说明
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### 命令行参数
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+| 参数 | 简写 | 说明 | 默认值 |
+|-----|------|------|--------|
+| `--kubeconfig` | `-k` | kubeconfig 文件路径 | `""` (in-cluster) |
+| `--namespaces` | `-n` | 命名空间列表（逗号分隔） | `default` |
+| `--label-selector` | `-l` | Label 选择器 | 必填 |
+| `--output-dir` | `-o` | 输出目录 | `/etc/config` |
+| `--resync-period` | `-r` | Resync 周期 | `10m` |
+| `--log-level` | `-v` | 日志级别 | `info` |
+| `--config` | `-c` | 配置文件路径 | `/etc/sidecar/config.yaml` |
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 环境变量
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+| 变量名 | 说明 | 默认值 |
+|-------|------|--------|
+| `KUBECONFIG` | kubeconfig 路径 | `""` |
+| `NAMESPACES` | 命名空间列表 | `default` |
+| `LABEL_SELECTOR` | Label 选择器（JSON） | 必填 |
+| `OUTPUT_DIR` | 输出目录 | `/etc/config` |
+| `LOG_LEVEL` | 日志级别 | `info` |
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 配置文件示例
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```
+kubeconfig: ""
+namespaces:
+  - default
+  - production
+labelSelector:
+  app: myapp
+  type: config
+outputDir: "/etc/config"
+resyncPeriod: "10m"
+logLevel: "info"
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## 文件同步规则
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### 目录结构
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```
+{OutputDir}/
+├── {namespace}/
+│   └── {configmap-name}/
+│       ├── key1 → 文件内容
+│       ├── key2 → 文件内容
+│       └── ...
+```
+
+### 示例
+
+ConfigMap:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+  namespace: default
+data:
+  app.conf: |
+    port = 8080
+  config.json: |
+    {"debug": true}
+```
+
+同步后的文件:
+```
+/etc/config/
+└── default/
+    └── my-config/
+        ├── app.conf
+        └── config.json
+```
+
+## 开发
+
+### 项目结构
+
+```
+k8s-sidecar/
+├── cmd/
+│   └── sidecar/
+│       └── main.go              # 主入口
+├── internal/
+│   ├── config/
+│   │   └── config.go            # 配置管理
+│   ├── client/
+│   │   └── kubernetes.go        # K8s 客户端
+│   ├── informer/
+│   │   └── manager.go           # Informer 管理器
+│   ├── sync/
+│   │   └── file_sync.go         # 文件同步服务
+│   └── logger/
+│       └── logger.go            # 日志
+├── examples/
+│   ├── deployment.yaml          # 部署示例
+│   └── rbac.yaml               # RBAC 配置
+├── go.mod
+├── Makefile
+└── Dockerfile
+```
+
+### 运行测试
+
+```bash
+# 单元测试
+make test
+
+# 格式化代码
+make fmt
+
+# 代码检查
+make vet
+```
+
+## 工作原理
+
+1. **初始化**: 加载配置，创建 Kubernetes 客户端
+2. **Informer 启动**: 为每个命名空间创建带 Label Selector 的 ConfigMap Informer
+3. **事件监听**: 
+   - Add/Update: 将 ConfigMap 的 data 写入文件系统
+   - Delete: 删除对应的文件目录
+4. **文件同步**: 使用原子写入（临时文件 → 重命名）确保一致性
+
+## 性能优化
+
+- **Informer 缓存**: 本地缓存 ConfigMap 数据，减少 API 调用
+- **Resync 周期**: 默认 10 分钟，避免频繁同步
+- **QPS 限制**: QPS=5, Burst=10，保护 API Server
+- **增量更新**: 仅在内容变化时写入文件
+
+## 安全
+
+- **最小权限**: 仅需 ConfigMap 的 get/list/watch 权限
+- **非 Root 运行**: 容器以非 root 用户运行
+- **RBAC**: 使用 Role 而非 ClusterRole（限定命名空间）
+
+## 故障排查
+
+### 查看日志
+
+```bash
+kubectl logs <pod-name> -c configmap-sidecar
+```
+
+### 常见问题
+
+**Q: ConfigMap 没有同步？**
+- 检查 Label 是否正确
+- 验证 RBAC 权限
+- 查看日志确认 Informer 是否启动
+
+**Q: 文件写入失败？**
+- 检查磁盘空间
+- 验证目录权限
+- 查看错误日志
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT
+
+## Contributing
+
+欢迎提交 Issue 和 Pull Request！

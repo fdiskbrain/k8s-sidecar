@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-with-sidecar
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      # 主应用容器
+      - name: main-app
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+      
+      # ConfigMap Sidecar 容器
+      - name: configmap-sidecar
+        image: k8s-configmap-sidecar:latest
+        args:
+        - --namespaces=default,production
+        - --label-selector=app=myapp,type=config
+        - --output-dir=/etc/config
+        - --log-level=info
+        env:
+        - name: LOG_LEVEL
+          value: "info"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+      
+      # 共享卷
+      volumes:
+      - name: config-volume
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+  namespace: default
+  labels:
+    app: myapp
+    type: config
+data:
+  app.conf: |
+    [server]
+    port = 8080
+    host = 0.0.0.0
+    
+    [database]
+    host = localhost
+    port = 5432
+  config.json: |
+    {
+      "debug": true,
+      "timeout": "30s",
+      "maxRetries": 3
+    }

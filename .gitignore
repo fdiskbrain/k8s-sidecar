@@ -1,0 +1,40 @@
+
+
+# Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
+
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.out
+
+# Go workspace file
+go.work
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config (may contain secrets)
+config.local.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
