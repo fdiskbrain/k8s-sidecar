@@ -131,10 +131,13 @@ func main() {
 
 // loadConfig 加载配置，合并配置文件和命令行参数
 func loadConfig(configFile, kubeconfig, namespaces, labelSelector, outputDir, resyncPeriod, logLevel string) (*config.Config, error) {
-	// 从配置文件加载
+	// 从配置文件加载（配置文件是可选的）
 	cfg, err := config.LoadConfig(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		// 如果配置文件不存在或加载失败，创建一个空配置
+		fmt.Printf("Warning: Failed to load config file %s: %v\n", configFile, err)
+		fmt.Println("Using command line parameters and defaults")
+		cfg = &config.Config{}
 	}
 
 	// 命令行参数优先级高于配置文件
@@ -174,6 +177,12 @@ func loadConfig(configFile, kubeconfig, namespaces, labelSelector, outputDir, re
 
 	if logLevel != "info" { // 如果不是默认值
 		cfg.LogLevel = logLevel
+	}
+
+	// 应用默认值并验证配置
+	config.ApplyDefaults(cfg)
+	if err := config.ValidateConfigPublic(cfg); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return cfg, nil

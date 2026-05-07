@@ -42,19 +42,24 @@ func LoadConfig(configFile string) (*Config, error) {
 	// 2. 从配置文件加载（如果存在）
 	if configFile != "" {
 		if err := loadFromFile(cfg, configFile); err != nil {
+			// 配置文件不存在或读取失败是警告，不是错误
 			fmt.Printf("Warning: Failed to load config file %s: %v\n", configFile, err)
+			// 继续使用默认值和后续的配置源
 		}
 	}
 
 	// 3. 从环境变量覆盖
 	loadFromEnv(cfg)
 
-	// 4. 验证配置
-	if err := validateConfig(cfg); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %w", err)
-	}
+	// 4. 注意：不在这里验证，因为命令行参数可能会填充必填字段
+	// 验证应该在所有配置源合并后进行
 
 	return cfg, nil
+}
+
+// ApplyDefaults 应用默认值（导出版本，供外部调用）
+func ApplyDefaults(cfg *Config) {
+	applyDefaults(cfg)
 }
 
 // applyDefaults 应用默认值
@@ -126,6 +131,11 @@ func loadFromEnv(cfg *Config) {
 	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
 		cfg.LogLevel = logLevel
 	}
+}
+
+// ValidateConfigPublic 验证配置（导出版本，供外部调用）
+func ValidateConfigPublic(cfg *Config) error {
+	return validateConfig(cfg)
 }
 
 // validateConfig 验证配置
