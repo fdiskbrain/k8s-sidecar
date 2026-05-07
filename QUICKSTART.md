@@ -29,14 +29,18 @@ make build
 
 ## 步骤 2: 本地测试运行
 
-### 方式 1: 使用命令行参数
+### 2.1 查看帮助
 
 ```bash
-# 查看帮助
-./bin/k8s-configmap-sidecar --help
+./bin/k8s-sidecar --help
+```
 
-# 本地运行（需要 kubeconfig）
-./bin/k8s-configmap-sidecar \
+### 2.2 运行 Sidecar
+
+#### 方式 1: 使用命令行参数
+
+```bash
+./bin/k8s-sidecar \
   --kubeconfig=$HOME/.kube/config \
   --namespaces=default \
   --label-selector=app=myapp,type=config \
@@ -44,9 +48,9 @@ make build
   --log-level=debug
 ```
 
-### 方式 2: 使用配置文件
+#### 方式 2: 使用配置文件
 
-```bash
+```
 # 创建配置目录
 mkdir -p /etc/sidecar
 
@@ -57,7 +61,7 @@ cp examples/config.yaml.example /etc/sidecar/config.yaml
 vim /etc/sidecar/config.yaml
 
 # 运行
-./bin/k8s-configmap-sidecar --config=/etc/sidecar/config.yaml
+./bin/k8s-sidecar --config=/etc/sidecar/config.yaml
 ```
 
 ### 方式 3: 使用环境变量
@@ -69,7 +73,7 @@ export LABEL_SELECTOR='{"app":"myapp","type":"config"}'
 export OUTPUT_DIR="/tmp/test-config"
 export LOG_LEVEL="info"
 
-./bin/k8s-configmap-sidecar
+./bin/k8s-sidecar
 ```
 
 ## 步骤 3: 在 Kubernetes 中部署
@@ -229,6 +233,14 @@ kubectl get rolebinding configmap-watcher-binding -o yaml
 kubectl apply -f examples/rbac.yaml
 ```
 
+## 常见问题
+
+### Q: 如何查看帮助信息？
+
+```bash
+./bin/k8s-sidecar --help
+```
+
 ## 常用命令速查
 
 ```bash
@@ -251,7 +263,7 @@ make vet
 make docker-build VERSION=v1.0.0
 
 # 查看帮助
-./bin/k8s-configmap-sidecar --help
+./bin/k8s-sidecar --help
 ```
 
 ## 下一步

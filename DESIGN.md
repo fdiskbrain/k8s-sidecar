@@ -286,12 +286,12 @@ func atomicWriteFile(filePath string, content []byte, perm os.FileMode) error {
 }
 ```
 
-## 4. 接口设计
+## 4. 使用指南
 
-### 4.1 命令行参数
+### 4.1 命令行使用
 
 ```bash
-./k8s-configmap-sidecar [flags]
+./k8s-sidecar [flags]
 ```
 
 | 参数 | 简写 | 说明 | 默认值 |
@@ -352,16 +352,16 @@ spec:
     spec:
       containers:
       - name: main-app
-        image: myapp:latest
+        image: your-app:latest
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config
       
       - name: configmap-sidecar
-        image: k8s-configmap-sidecar:latest
+        image: k8s-sidecar:latest
         args:
         - --namespaces=default,production
-        - --label-selector=app=myapp,type=config
+        - --label-selector=app=myapp
         - --output-dir=/etc/config
         env:
         - name: LOG_LEVEL

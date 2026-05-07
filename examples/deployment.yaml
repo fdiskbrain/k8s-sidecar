@@ -26,7 +26,7 @@ spec:
       
       # ConfigMap Sidecar 容器
       - name: configmap-sidecar
-        image: k8s-configmap-sidecar:latest
+        image: k8s-sidecar:latest
         args:
         - --namespaces=default,production
         - --label-selector=app=myapp,type=config

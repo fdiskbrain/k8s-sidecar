@@ -53,17 +53,17 @@ make build
 
 ```bash
 # 使用命令行参数
-./bin/k8s-configmap-sidecar \
+./bin/k8s-sidecar \
   --namespaces=default,production \
   --label-selector=app=myapp,type=config \
   --output-dir=/etc/config \
   --log-level=info
 
 # 或使用配置文件
-./bin/k8s-configmap-sidecar --config=/etc/sidecar/config.yaml
+./bin/k8s-sidecar --config=/etc/sidecar/config.yaml
 
 # 使用 kubeconfig 文件（本地开发）
-./bin/k8s-configmap-sidecar \
+./bin/k8s-sidecar \
   --kubeconfig=$HOME/.kube/config \
   --namespaces=default \
   --label-selector=app=myapp
@@ -76,7 +76,7 @@ make build
 make docker-build VERSION=latest
 
 # 或直接使用 Dockerfile
-docker build -t k8s-configmap-sidecar:latest .
+docker build -t k8s-sidecar:latest .
 ```
 
 ### 4. Kubernetes 部署

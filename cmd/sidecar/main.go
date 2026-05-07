@@ -46,7 +46,7 @@ func main() {
 	flag.Parse()
 
 	if version {
-		fmt.Printf("k8s-configmap-sidecar version: %s\n", Version)
+		fmt.Printf("k8s-sidecar version: %s\n", Version)
 		os.Exit(0)
 	}
 
@@ -68,7 +68,7 @@ func main() {
 		_ = log.Sync()
 	}()
 
-	log.Info("Starting k8s-configmap-sidecar",
+	log.Info("Starting k8s-sidecar",
 		zap.String("version", Version),
 		zap.Strings("namespaces", cfg.Namespaces),
 		zap.String("labelSelector", cfg.BuildLabelSelectorString()),
@@ -126,7 +126,7 @@ func main() {
 	// 等待关闭
 	informerMgr.WaitForShutdown(ctx.Done())
 
-	log.Info("k8s-configmap-sidecar stopped")
+	log.Info("k8s-sidecar stopped")
 }
 
 // loadConfig 加载配置，合并配置文件和命令行参数

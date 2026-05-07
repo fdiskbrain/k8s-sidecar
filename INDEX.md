@@ -118,7 +118,7 @@ make vet
 make build
 
 # 6. 运行
-./bin/k8s-configmap-sidecar --help
+./bin/k8s-sidecar --help
 ```
 
 ### 部署流程
@@ -138,6 +138,13 @@ kubectl get pods -l app=myapp
 
 # 5. 查看日志
 kubectl logs <pod-name> -c configmap-sidecar -f
+```
+
+### 快速测试
+
+```bash
+# 查看帮助
+./bin/k8s-sidecar --help
 ```
 
 ## 🎯 按任务查找文档
@@ -218,7 +225,7 @@ A: 默认 `/etc/sidecar/config.yaml`，可通过 `--config` 指定
 
 ```bash
 ./build.sh
-./bin/k8s-configmap-sidecar --help
+./bin/k8s-sidecar --help
 ```
 
 ---

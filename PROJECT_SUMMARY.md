@@ -179,7 +179,7 @@ make build     # 编译二进制
 
 ### 运行
 ```bash
-./bin/k8s-configmap-sidecar \
+./bin/k8s-sidecar \
   --namespaces=default,production \
   --label-selector=app=myapp,type=config \
   --output-dir=/etc/config
@@ -202,10 +202,23 @@ export GOPROXY=https://goproxy.io,direct
 ```
 
 ### 运行测试
+
 ```bash
-make test
-# 或
-./test.sh
+# 使用命令行参数
+./bin/k8s-sidecar \
+  --namespaces=default,production \
+  --label-selector=app=myapp,type=config \
+  --output-dir=/etc/config
+
+# 使用配置文件
+./bin/k8s-sidecar --config-file=config.yaml
+
+# 使用环境变量
+export NAMESPACES=default,production
+export LABEL_SELECTOR=app=myapp,type=config
+export OUTPUT_DIR=/etc/config
+./bin/k8s-sidecar
+
 ```
 
 ## 📋 待完成事项（可选增强）

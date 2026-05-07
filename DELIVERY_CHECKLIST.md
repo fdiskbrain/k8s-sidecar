@@ -145,8 +145,8 @@ make test
 ```
 
 3. **本地测试运行**
-```bash
-./bin/k8s-configmap-sidecar --help
+```
+./bin/k8s-sidecar --help
 ```
 
 ### 需要准备K8s环境
@@ -154,19 +154,19 @@ make test
 1. **启动Minikube或Kind集群**
 ```bash
 minikube start
-# 或
-kind create cluster
 ```
 
-2. **部署测试**
+2. **部署测试ConfigMap**
 ```bash
-kubectl apply -f examples/rbac.yaml
-kubectl apply -f examples/deployment.yaml
+kubectl apply -f examples/test-configmap.yaml
 ```
 
-3. **执行验收测试**
+3. **运行Sidecar进行测试**
 ```bash
-# 按照 TEST_ACCEPTANCE.md 逐项测试
+./bin/k8s-sidecar \
+  --namespaces=default \
+  --label-selector=app=myapp,type=config \
+  --output-dir=/etc/config
 ```
 
 ---
@@ -180,8 +180,8 @@ make build     # 编译二进制
 ```
 
 ### 快速运行
-```bash
-./bin/k8s-configmap-sidecar \
+```
+./bin/k8s-sidecar \
   --namespaces=default \
   --label-selector=app=myapp,type=config \
   --output-dir=/etc/config

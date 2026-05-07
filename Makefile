@@ -3,9 +3,9 @@
 .PHONY: build test clean docker-build fmt vet lint
 
 # Variables
-BINARY_NAME=k8s-configmap-sidecar
+BINARY_NAME=k8s-sidecar
 VERSION?=latest
-DOCKER_IMAGE=k8s-configmap-sidecar:$(VERSION)
+DOCKER_IMAGE=k8s-sidecar:$(VERSION)
 
 # Go commands
 GO_BUILD=go build

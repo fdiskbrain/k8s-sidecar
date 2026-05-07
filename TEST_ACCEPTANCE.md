@@ -75,10 +75,10 @@ EOF
 ```
 
 #### 1.3 本地运行 Sidecar
-```bash
+```
 mkdir -p /tmp/test-sidecar-output
 
-./bin/k8s-configmap-sidecar \
+./bin/k8s-sidecar \
   --kubeconfig=$HOME/.kube/config \
   --namespaces=test-sidecar \
   --label-selector=app=test-app,type=config \
@@ -179,9 +179,10 @@ data:
 EOF
 ```
 
-#### 4.2 运行多命名空间监控
+#### 4.2 多命名空间测试
+
 ```bash
-./bin/k8s-configmap-sidecar \
+./bin/k8s-sidecar \
   --kubeconfig=$HOME/.kube/config \
   --namespaces=test-sidecar,test-sidecar-2 \
   --label-selector=app=test-app,type=config \
@@ -249,9 +250,11 @@ EOF
 
 ### 测试 6: In-Cluster 模式测试
 
-#### 6.1 构建 Docker 镜像
+#### 6.1 Docker 镜像测试
+
 ```bash
-docker build -t k8s-configmap-sidecar:test .
+# 构建测试镜像
+docker build -t k8s-sidecar:test .
 ```
 
 #### 6.2 部署到集群
@@ -332,25 +335,15 @@ kubectl exec <new-pod> -c main-app -- ls -la /etc/config/
 - [ ] 数据完整性保持
 - [ ] 无数据丢失
 
-## 性能基准测试
-
-### 指标收集
+## 性能测试
 
 ```bash
-# 初始同步时间
-time ./bin/k8s-configmap-sidecar --help
+# 测量启动时间
+time ./bin/k8s-sidecar --help
 
-# 内存使用
-ps aux | grep k8s-configmap-sidecar
-
-# 文件写入性能
-# 在日志中查看 duration 字段
+# 检查内存使用
+ps aux | grep k8s-sidecar
 ```
-
-**目标指标**:
-- [ ] 单个 ConfigMap 同步时间 < 100ms
-- [ ] 内存占用 < 100MB (监控 100 个 ConfigMap)
-- [ ] API Server QPS < 10
 
 ## 验收检查清单
 
