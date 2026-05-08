@@ -35,6 +35,18 @@
    - 验收标准
    - 测试报告模板
 
+### 开发环境
+6. **[.devcontainer/README.md](.devcontainer/README.md)** - DevContainer 使用指南
+   - 快速启动
+   - 环境特性
+   - 常用命令
+   - 故障排查
+
+7. **[.devcontainer/DEVCONTAINER_SUMMARY.md](.devcontainer/DEVCONTAINER_SUMMARY.md)** - DevContainer 实施总结
+   - 配置详情
+   - 自定义指南
+   - 与 CI 一致性
+
 ## 💻 代码结构
 
 ### 主程序
@@ -89,6 +101,13 @@
   - RoleBinding
 
 - **[config.yaml.example](examples/config.yaml.example)** - 配置文件示例
+
+### DevContainer 配置 (.devcontainer/)
+- **[devcontainer.json](.devcontainer/devcontainer.json)** - DevContainer 主配置
+- **[Dockerfile](.devcontainer/Dockerfile)** - 开发容器镜像定义
+- **[README.md](.devcontainer/README.md)** - 使用文档
+- **[devcontainer-start.sh](.devcontainer/devcontainer-start.sh)** - 快速启动脚本
+- **[config.example.yaml](.devcontainer/config.example.yaml)** - 配置示例
 
 ### 构建和工具
 - **[go.mod](go.mod)** - Go 模块依赖
@@ -156,6 +175,9 @@ kubectl logs <pod-name> -c configmap-sidecar -f
 
 **快速上手使用**
 → 跟随 [QUICKSTART.md](QUICKSTART.md)
+
+**设置开发环境（推荐）**
+→ 使用 [DevContainer](.devcontainer/README.md)，一键启动完整开发环境
 
 **理解代码实现**
 → 查看 [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) 和源代码

@@ -18,6 +18,17 @@
 - Kubernetes 集群（用于测试）或本地 kubeconfig
 - Docker（可选，用于容器化部署）
 
+### 💻 使用 DevContainer（推荐）
+
+本项目提供完整的 DevContainer 配置，可以快速启动一致的开发环境：
+
+1. 安装 [VS Code](https://code.visualstudio.com/) 和 [Dev Containers 扩展](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. 在 VS Code 中打开项目
+3. 按 `F1`，选择 **Dev Containers: Reopen in Container**
+4. 等待容器构建完成即可开始开发
+
+详细文档请参考：[.devcontainer/README.md](.devcontainer/README.md)
+
 ## 架构设计
 
 ```

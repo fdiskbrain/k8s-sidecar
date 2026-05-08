@@ -1,7 +1,9 @@
-
-
 # Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# DevContainer
+.devcontainer/.docker-id
+.devcontainer/devcontainer.env
 
 # Binaries
 bin/
