@@ -17,6 +17,11 @@ GO_VET=go vet
 # Flags
 LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
 
+# Go 代理加速（中国镜像）
+export GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
+# export GONOSUMDB=*
+# export GONOPROXY=*
+
 all: fmt vet test build
 
 # Build the binary
@@ -30,9 +35,12 @@ ifndef GOARCH
 endif
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) $(GO_BUILD) $(LDFLAGS) -o ./bin/$(BINARY_NAME)-$(GOARCH) ./cmd/sidecar/main.go
 
-# Run tests
+# Run tests with optional race detection
 test:
-	$(GO_TEST) -v -race -coverprofile=coverage.out ./...
+ifndef RACE
+	RACE=-race
+endif
+	CGO_ENABLED=1 $(GO_TEST) -v $(RACE) -coverprofile=coverage.out ./...
 
 # Format code
 fmt:
