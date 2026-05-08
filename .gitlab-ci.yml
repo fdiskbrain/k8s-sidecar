@@ -82,11 +82,11 @@ test:
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-    - apk add --no-cache git make
+    - apk add --no-cache git make gcc musl-dev
     - go version
     - echo "GOPROXY=$GOPROXY"
   script:
-    - echo "Running unit tests..."
+    - echo "Running unit tests with race detection..."
     - make test
     - |
       echo "Test coverage report:"
