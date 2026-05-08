@@ -20,8 +20,8 @@ variables:
   
   # Go 代理加速（中国镜像）
   GOPROXY: "https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct"
-  GONOSUMDB: "*"
-  GONOPROXY: "*"
+  # GONOSUMDB: "*"
+  # GONOPROXY: "*"
   
   # Docker 镜像加速（中国镜像源）
   DOCKER_BUILDKIT: "1"

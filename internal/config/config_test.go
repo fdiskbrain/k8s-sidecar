@@ -70,7 +70,7 @@ func TestBuildLabelSelectorString(t *testing.T) {
 	}
 
 	result := cfg.BuildLabelSelectorString()
-	
+
 	// 结果应该包含两个选择器（顺序可能不同）
 	if result != "app=myapp,type=config" && result != "type=config,app=myapp" {
 		t.Errorf("Expected 'app=myapp,type=config' or 'type=config,app=myapp', got '%s'", result)

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go.uber.org/zap"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"go.uber.org/zap"
 )
 
 func TestFileSyncService_SyncConfigMap(t *testing.T) {
@@ -40,7 +40,7 @@ func TestFileSyncService_SyncConfigMap(t *testing.T) {
 
 	// 验证文件是否创建（现在文件直接在 tmpDir 根目录）
 	expectedDir := tmpDir
-	
+
 	configFile := filepath.Join(expectedDir, "config.txt")
 	content, err := os.ReadFile(configFile)
 	if err != nil {
