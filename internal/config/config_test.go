@@ -8,6 +8,32 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
+	// 保存并清除可能干扰测试的环境变量
+	originalKubeconfig := os.Getenv("KUBECONFIG")
+	originalNamespaces := os.Getenv("NAMESPACES")
+	originalLabelSelector := os.Getenv("LABEL_SELECTOR")
+	originalOutputDir := os.Getenv("OUTPUT_DIR")
+	originalResyncPeriod := os.Getenv("RESYNC_PERIOD")
+	originalLogLevel := os.Getenv("LOG_LEVEL")
+	
+	defer func() {
+		// 恢复原始环境变量
+		os.Setenv("KUBECONFIG", originalKubeconfig)
+		os.Setenv("NAMESPACES", originalNamespaces)
+		os.Setenv("LABEL_SELECTOR", originalLabelSelector)
+		os.Setenv("OUTPUT_DIR", originalOutputDir)
+		os.Setenv("RESYNC_PERIOD", originalResyncPeriod)
+		os.Setenv("LOG_LEVEL", originalLogLevel)
+	}()
+	
+	// 清除环境变量以避免干扰测试
+	os.Unsetenv("KUBECONFIG")
+	os.Unsetenv("NAMESPACES")
+	os.Unsetenv("LABEL_SELECTOR")
+	os.Unsetenv("OUTPUT_DIR")
+	os.Unsetenv("RESYNC_PERIOD")
+	os.Unsetenv("LOG_LEVEL")
+
 	// 创建临时配置文件
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "test-config.yaml")
