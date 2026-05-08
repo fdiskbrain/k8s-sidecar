@@ -28,7 +28,7 @@ RUN apk --no-cache add ca-certificates && \
     adduser -S sidecar -G sidecar
 
 # Copy binary from builder
-COPY --from=builder /app/bin/k8s-configmap-sidecar .
+COPY --from=builder /app/bin/k8s-sidecar .
 
 # Create config directory
 RUN mkdir -p /etc/sidecar/config && \
@@ -36,4 +36,4 @@ RUN mkdir -p /etc/sidecar/config && \
 
 USER sidecar
 
-ENTRYPOINT ["./k8s-configmap-sidecar"]
+ENTRYPOINT ["./k8s-sidecar"]
