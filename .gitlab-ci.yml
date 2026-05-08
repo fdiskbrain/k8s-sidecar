@@ -114,9 +114,9 @@ build-multiarch:
   services:
     - name: docker:24.0.5-dind
       command: ["--registry-mirror", "https://9685274a-b233-11ef-9780-e7f9f4bd82d7.fbdn.xyz"]
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+  # variables:
+  #   # DOCKER_HOST: tcp://docker:2375
+  #   # DOCKER_TLS_CERTDIR: ""
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
