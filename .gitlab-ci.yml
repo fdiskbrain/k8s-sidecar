@@ -2,7 +2,6 @@
 # 支持多架构 Docker 镜像构建和推送
 
 stages:
-  - lint
   - test
   - build
   - publish
@@ -37,7 +36,7 @@ cache:
 
 # ==================== Lint 阶段 ====================
 lint:
-  stage: lint
+  stage: test
   image: golang:${GO_VERSION}-alpine
   before_script:
     # 配置 Alpine APK 国内镜像源
