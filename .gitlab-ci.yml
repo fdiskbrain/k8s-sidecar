@@ -174,16 +174,12 @@ publish:
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-    - apk add --no-cache curl # qemu-user-static
+    - apk add --no-cache curl bash # qemu-user-static
     - docker info
     - |
       # 初始化 Buildx
-      docker buildx create --name multiarch-builder  --platform  "linux/amd64,linux/arm64,linux/arm" --use || true
+      docker buildx create --name multiarch-builder --platform "linux/amd64,linux/arm64,linux/arm" --use || true
       docker buildx inspect --bootstrap
-    # - |
-    #   # 注册 QEMU（使用国内镜像）
-    #   docker pull registry.cn-hangzhou.aliyuncs.com/hoxfs/qemu-user-static:latest || \
-    #   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     - |
       # 登录 GitLab Container Registry
       echo "Logging in to GitLab Registry..."
