@@ -42,20 +42,33 @@ lint:
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-    - apk add --no-cache git
+    - apk add --no-cache git curl
     - go version
     - echo "GOPROXY=$GOPROXY"
+    # 确保 GOPATH/bin 目录存在
+    - mkdir -p $(go env GOPATH)/bin
+    - export PATH=$(go env GOPATH)/bin:$PATH
   script:
     - echo "Running code quality checks..."
     - go fmt ./...
     - go vet ./...
     - |
       if ! command -v golangci-lint &> /dev/null; then
-        # 使用国内镜像下载 golangci-lint
+        echo "Installing golangci-lint..."
         export GOLANGCI_LINT_VERSION="v1.55.2"
-        curl -sSfL https://goproxy.cn/github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz | tar xz -C $(go env GOPATH)/bin golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64/golangci-lint --strip-components=1 || \
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
+        # 尝试从 GitHub releases 下载（使用代理）
+        if curl -sSfL -o /tmp/golangci-lint.tar.gz https://goproxy.cn/github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz; then
+          tar xzf /tmp/golangci-lint.tar.gz -C /tmp
+          mv /tmp/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64/golangci-lint $(go env GOPATH)/bin/golangci-lint
+          chmod +x $(go env GOPATH)/bin/golangci-lint
+          rm -rf /tmp/golangci-lint.tar.gz /tmp/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64
+        else
+          # 降级到官方安装脚本
+          echo "Falling back to official install script..."
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
+        fi
       fi
+    - golangci-lint version
     - golangci-lint run --timeout=5m
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
