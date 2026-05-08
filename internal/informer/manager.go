@@ -97,8 +97,8 @@ func (im *InformerManager) startNamespaceInformer(namespace string) error {
 	// 获取 ConfigMap Informer
 	configMapInformer := factory.Core().V1().ConfigMaps().Informer()
 
-	// 注册事件处理器
-	configMapInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	// 注册事件处理器（返回值通常不需要检查）
+	_, _ = configMapInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    im.handleAdd,
 		UpdateFunc: im.handleUpdate,
 		DeleteFunc: im.handleDelete,

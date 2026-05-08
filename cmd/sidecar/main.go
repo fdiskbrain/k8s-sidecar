@@ -173,6 +173,8 @@ func loadConfig(configFile, kubeconfig, namespaces, labelSelector, outputDir, re
 	if resyncPeriod != "10m0s" { // 如果不是默认值
 		// 这里简化处理，实际应该解析 duration 字符串
 		// 可以使用 time.ParseDuration
+		// TODO: 支持自定义 resync period
+		_ = resyncPeriod // 避免未使用变量警告
 	}
 
 	if logLevel != "info" { // 如果不是默认值

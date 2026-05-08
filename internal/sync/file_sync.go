@@ -124,34 +124,34 @@ func (fss *FileSyncService) atomicWriteFile(filePath string, content []byte, per
 	// 确保清理临时文件
 	defer func() {
 		if tmpFile != nil {
-			tmpFile.Close()
-			os.Remove(tmpName)
+			_ = tmpFile.Close()
+			_ = os.Remove(tmpName)
 		}
 	}()
 
 	// 写入内容
 	if _, err := tmpFile.Write(content); err != nil {
-		tmpFile.Close()
-		os.Remove(tmpName)
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("failed to write to temp file: %w", err)
 	}
 
 	// 关闭文件
 	if err := tmpFile.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 	tmpFile = nil
 
 	// 设置权限
 	if err := os.Chmod(tmpName, perm); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("failed to set permissions: %w", err)
 	}
 
-	// 原子重命名
+	// 重命名到目标文件
 	if err := os.Rename(tmpName, filePath); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("failed to rename file: %w", err)
 	}
 
