@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25-alpine AS builder
+FROM public.ecr.aws/docker/library/golang:1.25.1-alpine AS builder
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
 
 # Final stage
-FROM alpine:latest
+FROM public.ecr.aws/docker/library/alpine:latest
 
 WORKDIR /app
 
