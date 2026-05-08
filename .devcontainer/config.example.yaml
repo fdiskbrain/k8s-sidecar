@@ -1,0 +1,24 @@
+# k8s-sidecar 配置文件示例
+# 在 DevContainer 中使用时，将此文件复制到容器内适当位置
+
+# kubeconfig 路径（DevContainer 已自动挂载 ~/.kube）
+kubeconfig: "/home/vscode/.kube/config"
+
+# 要监控的命名空间
+namespaces:
+  - default
+  - production
+
+# Label 选择器
+labelSelector:
+  app: myapp
+  type: config
+
+# 输出目录
+outputDir: "/etc/sidecar/config"
+
+# Resync 周期
+resyncPeriod: "10m"
+
+# 日志级别
+logLevel: "info"
