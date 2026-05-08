@@ -109,11 +109,11 @@ test:
 # ==================== Build 阶段 ====================
 build-multiarch:
   stage: build
-  image: docker:24-dind
+  image:
+    name: docker:24.0.5
   services:
-    - name: docker:24-dind
-      alias: docker
-      command: ["--tls=false"]
+    - name: docker:24.0.5-dind
+      command: ["--registry-mirror", "https://9685274a-b233-11ef-9780-e7f9f4bd82d7.fbdn.xyz"]
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
