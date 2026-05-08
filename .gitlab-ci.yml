@@ -11,7 +11,7 @@ stages:
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_DRIVER: overlay2
-  BUILD_PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
+  BUILD_PLATFORMS: "linux/amd64,linux/arm64,linux/arm"
   GO_VERSION: "1.25"
   
   # Go 模块缓存
@@ -114,9 +114,9 @@ build-multiarch:
   services:
     - name: docker:29-dind
       command: ["--registry-mirror", "https://9685274a-b233-11ef-9780-e7f9f4bd82d7.fbdn.xyz"]
-  # variables:
-  #   # DOCKER_HOST: tcp://docker:2375
-  #   # DOCKER_TLS_CERTDIR: ""
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
@@ -176,7 +176,7 @@ publish:
     - docker info
     - |
       # 初始化 Buildx
-      docker buildx create --name multiarch-builder --use || true
+      docker buildx create --name multiarch-builder --platform $BUILD_PLATFORMS --use || true
       docker buildx inspect --bootstrap
     - |
       # 注册 QEMU（使用国内镜像）
