@@ -15,7 +15,7 @@ func TestLoadConfig(t *testing.T) {
 	originalOutputDir := os.Getenv("OUTPUT_DIR")
 	originalResyncPeriod := os.Getenv("RESYNC_PERIOD")
 	originalLogLevel := os.Getenv("LOG_LEVEL")
-
+	
 	defer func() {
 		// 恢复原始环境变量（忽略错误，因为在 defer 中无法处理）
 		_ = os.Setenv("KUBECONFIG", originalKubeconfig)
@@ -25,7 +25,7 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Setenv("RESYNC_PERIOD", originalResyncPeriod)
 		_ = os.Setenv("LOG_LEVEL", originalLogLevel)
 	}()
-
+	
 	// 清除环境变量以避免干扰测试（忽略错误，这些操作在测试环境中几乎不会失败）
 	_ = os.Unsetenv("KUBECONFIG")
 	_ = os.Unsetenv("NAMESPACES")

@@ -19,8 +19,8 @@ LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
 
 # Go 代理加速（中国镜像）
 export GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
-export GONOSUMDB=*
-export GONOPROXY=*
+# export GONOSUMDB=*
+# export GONOPROXY=*
 
 all: fmt vet test build
 

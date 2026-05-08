@@ -9,8 +9,8 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 配置 Go 代理加速（中国镜像）
 ENV GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,direct
-ENV GONOSUMDB=*
-ENV GONOPROXY=*
+# ENV GONOSUMDB=*
+# ENV GONOPROXY=*
 
 # Copy go mod files
 COPY go.mod go.sum* ./
