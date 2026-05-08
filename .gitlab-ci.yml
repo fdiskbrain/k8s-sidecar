@@ -42,7 +42,7 @@ lint:
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-    - apk add --no-cache git curl
+    - apk add --no-cache git curl golangci-lint
     - go version
     - echo "GOPROXY=$GOPROXY"
     # 确保 GOPATH/bin 目录存在
