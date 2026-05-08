@@ -174,7 +174,7 @@ publish:
   before_script:
     # 配置 Alpine APK 国内镜像源
     - sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-    - apk add --no-cache curl qemu-user-static
+    - apk add --no-cache curl # qemu-user-static
     - docker info
     - |
       # 初始化 Buildx
