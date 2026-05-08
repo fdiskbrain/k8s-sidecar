@@ -110,7 +110,7 @@ test:
 build-multiarch:
   stage: build
   image:
-    name: docker:29
+    name: docker:29-cli
   services:
     - name: docker:29-dind
       command: ["--registry-mirror", "https://9685274a-b233-11ef-9780-e7f9f4bd82d7.fbdn.xyz"]
