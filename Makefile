@@ -37,7 +37,7 @@ endif
 
 # Run tests
 test:
-	$(GO_TEST) -v -race -coverprofile=coverage.out ./...
+	CGO_ENABLED=1  $(GO_TEST) -v -race -coverprofile=coverage.out ./...
 
 # Format code
 fmt:
