@@ -76,6 +76,17 @@ sudo gitlab-runner register \
 
 **注意**: 大多数情况下，GitLab 会自动提供这些变量，无需手动配置。
 
+### 4. 中国镜像加速（可选但推荐）
+
+项目已内置中国镜像加速配置，适用于中国大陆地区的 GitLab Runner：
+
+- ✅ **Go 模块代理**: goproxy.cn + 阿里云镜像
+- ✅ **Alpine APK 镜像**: mirrors.aliyun.com
+- ✅ **Docker 镜像加速**: 阿里云容器镜像服务
+- ✅ **QEMU 镜像**: 阿里云杭州节点
+
+详细配置请参考 [CI_CD_ACCELERATION.md](CI_CD_ACCELERATION.md)
+
 ---
 
 ## 配置步骤
@@ -259,7 +270,7 @@ docker search registry.gitlab.com/<namespace>/k8s-sidecar
 
 ### 在 Kubernetes 中使用
 
-```yaml
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
