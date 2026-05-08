@@ -15,8 +15,8 @@ COPY . .
 
 # Build the binary with platform detection
 ARG VERSION=latest
-ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
+
+RUN CGO_ENABLED=0 GOOS=linux make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
 
 # Final stage
 FROM alpine:latest
