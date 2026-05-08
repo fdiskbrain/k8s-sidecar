@@ -10,7 +10,7 @@ stages:
 variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_DRIVER: overlay2
-  BUILD_PLATFORMS: "linux/amd64,linux/arm64,linux/arm"
+  BUILD_PLATFORMS: "linux/amd64,linux/arm64"
   GO_VERSION: "1.25"
   
   # Go 模块缓存
