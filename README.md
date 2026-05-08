@@ -89,6 +89,21 @@ kubectl apply -f examples/rbac.yaml
 kubectl apply -f examples/deployment.yaml
 ```
 
+### 5. CI/CD 自动化构建
+
+项目已配置 GitLab CI/CD Pipeline，支持自动构建和推送多架构镜像：
+
+```bash
+# 推送代码触发流水线
+git push origin main
+
+# 发布版本（自动打标签）
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+详细配置请参考 [GITLAB_CI_GUIDE.md](GITLAB_CI_GUIDE.md)
+
 ## 配置说明
 
 ### 命令行参数
