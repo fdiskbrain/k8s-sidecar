@@ -23,7 +23,7 @@ COPY . .
 ARG VERSION=latest
 ARG TARGETARCH
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
+RUN CGO_ENABLED=0 GOOS=linux  make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
 
 # Final stage
 FROM public.ecr.aws/docker/library/alpine:latest
