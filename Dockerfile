@@ -13,9 +13,10 @@ RUN go mod download || true
 # Copy source code
 COPY . .
 
-# Build the binary
+# Build the binary with platform detection
 ARG VERSION=latest
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} make build LDFLAGS="-ldflags -X main.Version=${VERSION}"
 
 # Final stage
 FROM alpine:latest
