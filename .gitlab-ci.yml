@@ -142,9 +142,12 @@ build-multiarch:
         IMAGE_TAG="latest"
       fi
       
-      # 构建多架构镜像（不推送，仅测试）
+      # 注意：docker exporter (--load) 不支持多平台 manifest lists
+      # 因此这里只构建当前架构用于测试验证
+      echo "Note: Building single architecture for build verification (multi-arch push happens in publish stage)"
+      
       docker buildx build \
-        --platform ${BUILD_PLATFORMS} \
+        --platform linux/arm64 \
         --build-arg VERSION=${IMAGE_TAG} \
         --tag ${CI_REGISTRY_IMAGE}:${IMAGE_TAG}-build \
         --load \
