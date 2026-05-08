@@ -112,7 +112,7 @@ build-multiarch:
     name: docker:29-cli
   services:
     - name: docker:29-dind
-      command: ["--registry-mirror", "https://9685274a-b233-11ef-9780-e7f9f4bd82d7.fbdn.xyz"]
+      command: ["--registry-mirror", "https://docker.m.daocloud.com"]
   # variables:
   #   DOCKER_HOST: tcp://docker:2375
   #   DOCKER_TLS_CERTDIR: ""
@@ -167,7 +167,7 @@ publish:
   services:
     - name: docker:24-dind
       alias: docker
-      command: ["--tls=false"]
+      command: ["--registry-mirror", "https://docker.m.daocloud.com"]
   # variables:
   #   DOCKER_HOST: tcp://docker:2375
   #   DOCKER_TLS_CERTDIR: ""
