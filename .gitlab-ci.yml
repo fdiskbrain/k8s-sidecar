@@ -184,9 +184,9 @@ publish:
       # 登录 GitLab Container Registry
       echo "Logging in to GitLab Registry..."
       echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} -u "${CI_REGISTRY_USER}" --password-stdin
+      export SHELL=/bin/bash
   script:
     - |
-      #!/bin/bash
       echo "Publishing multi-architecture images..."
       # 确定镜像标签
       TAGS=""
