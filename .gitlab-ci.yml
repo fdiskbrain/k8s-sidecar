@@ -187,7 +187,7 @@ publish:
   script:
     - |
       echo "Publishing multi-architecture images..."
-      
+      set -x
       # 确定镜像标签
       TAGS=""
       if [ -n "$CI_COMMIT_TAG" ]; then
