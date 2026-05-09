@@ -165,7 +165,6 @@ publish:
   stage: publish
   image:
     name: docker:29-cli
-    entrypoint: ["/bin/bash"]
   services:
     - name: docker:29-dind
       command: ["--registry-mirror", "https://docker.m.daocloud.io"]
@@ -187,8 +186,8 @@ publish:
       echo "${CI_REGISTRY_PASSWORD}" | docker login ${CI_REGISTRY} -u "${CI_REGISTRY_USER}" --password-stdin
   script:
     - |
+      #!/bin/bash
       echo "Publishing multi-architecture images..."
-      set -x
       # 确定镜像标签
       TAGS=""
       if [ -n "$CI_COMMIT_TAG" ]; then
