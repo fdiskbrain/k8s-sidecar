@@ -187,7 +187,6 @@ publish:
       export SHELL=/bin/bash
   script:
     - |
-      #!/bin/bash
       echo "Publishing multi-architecture images..."
       # 确定镜像标签
       TAGS=""
@@ -195,7 +194,7 @@ publish:
         TAGS="${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
         # 如果是稳定版本，也打上 latest 标签
         if echo "${CI_COMMIT_TAG}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-          TAGS="${TAGS},${CI_REGISTRY_IMAGE}:latest"
+          TAGS="${TAGS} ${CI_REGISTRY_IMAGE}:latest"
         fi
       else
         TAGS="${CI_REGISTRY_IMAGE}:latest"
@@ -204,8 +203,9 @@ publish:
       echo "Tags: ${TAGS}"
       
       # 构建并推送多架构镜像
-      IFS=',' read -ra TAG_ARRAY <<< "${TAGS}"
-      for tag in "${TAG_ARRAY[@]}"; do
+      # IFS=',' read -ra TAG_ARRAY <<< "${TAGS}"
+      #for tag in "${TAG_ARRAY[@]}"; do
+      for tag in "${TAGS}"; do
         echo "Building and pushing: ${tag}"
         docker buildx build \
           --platform ${BUILD_PLATFORMS} \
@@ -220,7 +220,7 @@ publish:
     - echo "✅ Successfully published images to ${CI_REGISTRY_IMAGE}"
     - |
       echo "Published tags:"
-      for tag in "${TAG_ARRAY[@]}"; do
+      for tag in "${TAGS}"; do
         echo "  - ${tag}"
       done
   after_script:
