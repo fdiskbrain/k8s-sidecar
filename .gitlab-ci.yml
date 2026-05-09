@@ -187,6 +187,7 @@ publish:
       export SHELL=/bin/bash
   script:
     - |
+      #!/bin/bash
       echo "Publishing multi-architecture images..."
       # 确定镜像标签
       TAGS=""
