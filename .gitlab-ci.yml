@@ -123,7 +123,7 @@ build-multiarch:
     - docker info
     - |
       # 初始化 Buildx
-      docker buildx create --name multiarch-builder  --platform  "linux/amd64,linux/arm64,linux/arm" --use || true
+      docker buildx create --name multiarch-builder  --platform ${BUILD_PLATFORMS} --use || true
       docker buildx inspect --bootstrap
     # - |
     #   # 注册 QEMU 用于跨平台模拟（使用国内镜像）
@@ -178,7 +178,7 @@ publish:
     - docker info
     - |
       # 初始化 Buildx
-      docker buildx create --name multiarch-builder --platform "linux/amd64,linux/arm64,linux/arm" --use || true
+      docker buildx create --name multiarch-builder --platform ${BUILD_PLATFORMS} --use || true
       docker buildx inspect --bootstrap
     - |
       # 登录 GitLab Container Registry
