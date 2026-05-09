@@ -165,6 +165,7 @@ publish:
   stage: publish
   image:
     name: docker:29-cli
+    entrypoint: ["/bin/bash"]
   services:
     - name: docker:29-dind
       command: ["--registry-mirror", "https://docker.m.daocloud.io"]
