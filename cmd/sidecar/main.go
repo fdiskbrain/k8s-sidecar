@@ -146,14 +146,11 @@ func setupEnvOverrides(kubeconfig, namespaces, labelSelector, outputDir, resyncP
 	}
 
 	if labelSelector != "" {
-		// 将 label selector 字符串转换为 JSON 格式
-		selectorMap := parseLabelSelector(labelSelector)
-		if len(selectorMap) > 0 {
-			// 这里简化处理，实际应该序列化为 JSON
-			// 但由于 Viper 支持 mapstructure，我们可以直接设置
-			// 为了简单起见，我们使用 LABEL_SELECTOR 环境变量
-			_ = os.Setenv("SIDECAR_LABEL_SELECTOR", labelSelectorToJSON(selectorMap))
-		}
+		// 直接设置原始字符串，由 LoadConfig 统一解析
+		// 支持两种格式：
+		// 1. JSON 格式: {"app":"grafana","type":"dashboard"}
+		// 2. key=value 格式: app=grafana,type=dashboard
+		_ = os.Setenv("SIDECAR_LABEL_SELECTOR", labelSelector)
 	}
 
 	if outputDir != "" {
@@ -164,6 +161,8 @@ func setupEnvOverrides(kubeconfig, namespaces, labelSelector, outputDir, resyncP
 		// 验证 duration 格式
 		if _, err := time.ParseDuration(resyncPeriod); err == nil {
 			_ = os.Setenv("SIDECAR_RESYNC_PERIOD", resyncPeriod)
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: Invalid resync period '%s': %v\n", resyncPeriod, err)
 		}
 	}
 

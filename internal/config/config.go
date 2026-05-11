@@ -78,16 +78,6 @@ func LoadConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	// 处理特殊的 Namespaces 格式（支持逗号分隔的字符串）
-	if len(cfg.Namespaces) == 0 {
-		if ns := v.GetString("namespaces"); ns != "" {
-			cfg.Namespaces = strings.Split(ns, ",")
-			for i := range cfg.Namespaces {
-				cfg.Namespaces[i] = strings.TrimSpace(cfg.Namespaces[i])
-			}
-		}
-	}
-
 	// 验证配置
 	if err := validateConfig(cfg); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
@@ -107,20 +97,65 @@ func bindEnvVars(v *viper.Viper) {
 	_ = v.BindEnv("logLevel", "LOG_LEVEL", "SIDECAR_LOG_LEVEL")
 }
 
-// preprocessEnvVars 预处理环境变量中的特殊格式
+// preprocessEnvVars 在 Unmarshal 之前预处理环境变量中的特殊格式
+//
+// 由于 Viper 的 Unmarshal 无法自动处理某些类型转换（如 JSON 字符串到 map），
+// 需要在反序列化之前手动解析并设置到 Viper 实例中。
+//
+// 支持的转换：
+// - LABEL_SELECTOR: JSON 字符串或 key=value 格式 → map[string]string
+// - NAMESPACES: 逗号分隔字符串 → []string
 func preprocessEnvVars(v *viper.Viper) {
-	// 处理 LABEL_SELECTOR 环境变量（JSON 字符串 → map）
+	// 处理 LABEL_SELECTOR 环境变量（JSON 字符串或 key=value 格式 → map）
 	labelSelectorEnv := []string{"LABEL_SELECTOR", "SIDECAR_LABEL_SELECTOR"}
 	for _, envVar := range labelSelectorEnv {
 		if val := os.Getenv(envVar); val != "" {
 			var selector map[string]string
-			if err := json.Unmarshal([]byte(val), &selector); err == nil {
-				// 将解析后的 map 设置到 Viper 中
-				v.Set("labelSelector", selector)
-				break
+			
+			// 尝试解析 JSON 格式
+			if val[0] == '{' {
+				if err := json.Unmarshal([]byte(val), &selector); err != nil {
+					fmt.Printf("Warning: Failed to parse %s as JSON: %v. Expected format: '{\"key\":\"value\"}'\n", envVar, err)
+					// 设置为空 map，避免 Unmarshal 失败
+					v.Set("labelSelector", make(map[string]string))
+					return
+				}
+			} else {
+				// 解析 key=value 格式 (如: app=grafana,type=dashboard)
+				selector = parseKeyValueFormat(val)
 			}
+			
+			v.Set("labelSelector", selector)
+			break
 		}
 	}
+
+	// 处理 NAMESPACES 环境变量（逗号分隔字符串 → 数组）
+	namespacesEnv := []string{"NAMESPACES", "SIDECAR_NAMESPACES"}
+	for _, envVar := range namespacesEnv {
+		if val := os.Getenv(envVar); val != "" {
+			nsList := strings.Split(val, ",")
+			for i := range nsList {
+				nsList[i] = strings.TrimSpace(nsList[i])
+			}
+			v.Set("namespaces", nsList)
+			break
+		}
+	}
+}
+
+// parseKeyValueFormat 解析 key=value 格式的字符串为 map
+// 例如: "app=grafana,type=dashboard" -> {"app": "grafana", "type": "dashboard"}
+func parseKeyValueFormat(s string) map[string]string {
+	result := make(map[string]string)
+	pairs := strings.Split(s, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(parts) == 2 {
+			result[parts[0]] = parts[1]
+		}
+	}
+	return result
 }
 
 // setDefaults 设置默认值
