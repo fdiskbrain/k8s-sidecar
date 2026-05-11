@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -64,6 +66,9 @@ func LoadConfig(configFile string) (*Config, error) {
 	// 绑定环境变量
 	bindEnvVars(v)
 
+	// 预处理环境变量中的特殊格式
+	preprocessEnvVars(v)
+
 	// 设置默认值
 	setDefaults(v)
 
@@ -100,6 +105,22 @@ func bindEnvVars(v *viper.Viper) {
 	_ = v.BindEnv("outputDir", "OUTPUT_DIR", "SIDECAR_OUTPUT_DIR")
 	_ = v.BindEnv("resyncPeriod", "RESYNC_PERIOD", "SIDECAR_RESYNC_PERIOD")
 	_ = v.BindEnv("logLevel", "LOG_LEVEL", "SIDECAR_LOG_LEVEL")
+}
+
+// preprocessEnvVars 预处理环境变量中的特殊格式
+func preprocessEnvVars(v *viper.Viper) {
+	// 处理 LABEL_SELECTOR 环境变量（JSON 字符串 → map）
+	labelSelectorEnv := []string{"LABEL_SELECTOR", "SIDECAR_LABEL_SELECTOR"}
+	for _, envVar := range labelSelectorEnv {
+		if val := os.Getenv(envVar); val != "" {
+			var selector map[string]string
+			if err := json.Unmarshal([]byte(val), &selector); err == nil {
+				// 将解析后的 map 设置到 Viper 中
+				v.Set("labelSelector", selector)
+				break
+			}
+		}
+	}
 }
 
 // setDefaults 设置默认值
