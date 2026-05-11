@@ -55,5 +55,37 @@ if [ -f ~/.zshrc ]; then
     echo 'export GOSUMDB="sum.golang.google.cn"' >> ~/.zshrc
 fi
 
-wget https://gitlab.com/gitlab-org/cli/-/releases/v1.95.0/downloads/glab_1.95.0_linux_$( go env GOARCH).deb -O /tmp/glab.deb 
-sudo dpkg -i /tmp/glab.deb
+# Install glab (GitLab CLI tool)
+echo "Installing glab (GitLab CLI)..."
+GLAB_VERSION="1.95.0"
+GLAB_URL="https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_$(go env GOARCH).deb"
+
+# Download with timeout and error handling
+if wget -q --timeout=30 "${GLAB_URL}" -O /tmp/glab.deb; then
+    echo "✓ Downloaded glab successfully"
+    
+    # Install with error handling
+    if sudo dpkg -i /tmp/glab.deb; then
+        echo "✓ glab installed successfully"
+        # Clean up temporary file
+        rm -f /tmp/glab.deb
+        echo "✓ Temporary files cleaned up"
+    else
+        echo "✗ Error: Failed to install glab"
+        echo "Please install manually from: ${GLAB_URL}"
+        # Keep the deb file for manual installation
+        exit 1
+    fi
+else
+    echo "✗ Error: Failed to download glab from ${GLAB_URL}"
+    echo "Please check your network connection or install manually"
+    exit 1
+fi
+
+echo ""
+echo "========================================="
+echo "DevContainer setup completed!"
+echo "GOPROXY: ${GOPROXY}"
+echo "GOSUMDB: ${GOSUMDB}"
+echo "glab: $(glab --version 2>/dev/null || echo 'installed')"
+echo "========================================="
