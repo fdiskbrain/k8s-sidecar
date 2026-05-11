@@ -1,0 +1,74 @@
+# Grafana Sidecar 专用 RBAC 配置
+
+---
+# ServiceAccount for Grafana Sidecar
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-sidecar
+  namespace: monitoring
+  labels:
+    app: grafana
+
+---
+# Role: 允许读取 ConfigMap（Dashboard 定义）
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grafana-dashboard-watcher
+  namespace: monitoring
+  labels:
+    app: grafana
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+
+---
+# RoleBinding: 绑定到 Grafana Sidecar ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana-dashboard-watcher-binding
+  namespace: monitoring
+  labels:
+    app: grafana
+roleRef:
+  kind: Role
+  name: grafana-dashboard-watcher
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: grafana-sidecar
+  namespace: monitoring
+
+---
+# 如果需要监控多个命名空间的 Dashboard，使用 ClusterRole
+# （谨慎使用，建议仅在必要时启用）
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   name: grafana-dashboard-watcher-cluster
+#   labels:
+#     app: grafana
+# rules:
+# - apiGroups: [""]
+#   resources: ["configmaps"]
+#   verbs: ["get", "list", "watch"]
+# 
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: grafana-dashboard-watcher-cluster-binding
+#   labels:
+#     app: grafana
+# roleRef:
+#   kind: ClusterRole
+#   name: grafana-dashboard-watcher-cluster
+#   apiGroup: rbac.authorization.k8s.io
+# subjects:
+# - kind: ServiceAccount
+#   name: grafana-sidecar
+#   namespace: monitoring

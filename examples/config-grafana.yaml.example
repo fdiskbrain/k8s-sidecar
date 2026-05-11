@@ -1,0 +1,22 @@
+# Grafana Dashboard Sidecar 配置示例
+
+# kubeconfig 路径（空字符串表示使用 in-cluster 模式）
+kubeconfig: ""
+
+# 要监控的命名空间列表
+namespaces: 
+  - monitoring
+
+# Label 选择器 - 只选择 Grafana Dashboard 类型的 ConfigMap
+labelSelector:
+  app: grafana
+  type: dashboard
+
+# 配置文件输出目录（Grafana 默认 dashboard 目录）
+outputDir: "/var/lib/grafana/dashboards"
+
+# Informer 重新同步周期（缩短以更快响应变化）
+resyncPeriod: "5m"
+
+# 日志级别 (debug, info, warn, error)
+logLevel: "info"

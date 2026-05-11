@@ -1,0 +1,183 @@
+# Grafana 部署配置，包含 k8s-sidecar 自动加载 Dashboard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-with-sidecar
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      # 使用专用的 ServiceAccount（需要 RBAC 权限）
+      serviceAccountName: grafana-sidecar
+      
+      containers:
+      # Grafana 主容器
+      - name: grafana
+        image: grafana/grafana:10.2.0
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        # Grafana 配置
+        - name: GF_SECURITY_ADMIN_USER
+          value: "admin"
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-password
+              key: password
+        - name: GF_INSTALL_PLUGINS
+          value: ""
+        # 启用从文件系统加载 dashboard
+        - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+          value: "/var/lib/grafana/dashboards/app-metrics.json"
+        volumeMounts:
+        # Grafana 数据持久化
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        # Dashboard 目录（与 sidecar 共享）
+        - name: dashboards-volume
+          mountPath: /var/lib/grafana/dashboards
+          readOnly: true
+        # Grafana 配置文件
+        - name: grafana-config
+          mountPath: /etc/grafana/grafana.ini
+          subPath: grafana.ini
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      
+      # ConfigMap Sidecar 容器 - 自动同步 Dashboard
+      - name: dashboard-sidecar
+        image: k8s-sidecar:latest
+        args:
+        # 监控 monitoring 命名空间中标签为 app=grafana, type=dashboard 的 ConfigMap
+        - --namespaces=monitoring
+        - --label-selector=app=grafana,type=dashboard
+        # 输出到 Grafana 的 dashboard 目录
+        - --output-dir=/var/lib/grafana/dashboards
+        - --log-level=info
+        # 可选：缩短重新同步周期以便更快响应变化
+        - --resync-period=5m
+        env:
+        - name: LOG_LEVEL
+          value: "info"
+        volumeMounts:
+        # 与 Grafana 共享 dashboard 目录
+        - name: dashboards-volume
+          mountPath: /var/lib/grafana/dashboards
+      
+      volumes:
+      # Grafana 数据存储
+      - name: grafana-storage
+        emptyDir: {}
+      # Dashboard 共享卷（sidecar 写入，Grafana 读取）
+      - name: dashboards-volume
+        emptyDir: {}
+      # Grafana 配置文件
+      - name: grafana-config
+        configMap:
+          name: grafana-config
+
+---
+# Grafana 配置文件
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: monitoring
+data:
+  grafana.ini: |
+    [server]
+    http_port = 3000
+    
+    [security]
+    admin_user = admin
+    
+    [dashboards]
+    # 启用从文件系统加载 dashboard
+    default_home_dashboard_path = /var/lib/grafana/dashboards/app-metrics.json
+    
+    [paths]
+    # Dashboard 文件目录
+    provisioning = /etc/grafana/provisioning
+    
+    [unified_alerting]
+    enabled = true
+
+---
+# Grafana Admin Password Secret（示例，生产环境应使用更安全的密码管理）
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin-password
+  namespace: monitoring
+type: Opaque
+stringData:
+  password: admin123
+
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: grafana
+
+---
+# Grafana Ingress（可选，用于外部访问）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: grafana.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

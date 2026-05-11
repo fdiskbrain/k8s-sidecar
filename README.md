@@ -92,6 +92,8 @@ docker build -t k8s-sidecar:latest .
 
 ### 4. Kubernetes 部署
 
+#### 通用应用配置同步
+
 ```bash
 # 应用 RBAC
 kubectl apply -f examples/rbac.yaml
@@ -99,6 +101,28 @@ kubectl apply -f examples/rbac.yaml
 # 部署应用
 kubectl apply -f examples/deployment.yaml
 ```
+
+#### 📊 Grafana Dashboard 自动加载（推荐）
+
+使用 sidecar 自动同步 Grafana Dashboard ConfigMap 到文件系统：
+
+```bash
+# 一键部署 Grafana + Sidecar
+kubectl apply -f examples/rbac-grafana.yaml
+kubectl apply -f examples/grafana-dashboard.yaml
+kubectl apply -f examples/deployment-grafana.yaml
+
+# 访问 Grafana
+kubectl port-forward -n monitoring svc/grafana 3000:3000
+```
+
+**特性**：
+- ✅ 自动检测 Dashboard ConfigMap 变化
+- ✅ 实时同步到 Grafana 文件系统
+- ✅ 支持多命名空间、多环境
+- ✅ 零停机更新 Dashboard
+
+📖 **详细文档**: [Grafana 集成指南](examples/GRAFANA_INTEGRATION.md) | [快速参考](examples/GRAFANA_QUICKREF.md)
 
 ### 5. CI/CD 自动化构建
 
