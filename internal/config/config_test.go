@@ -458,7 +458,9 @@ outputDir: /tmp/test
 	// 加载配置 - 应该显示警告但使用配置文件中的值
 	cfg, err := LoadConfig(configFile)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Fatalf("Failed to close pipe writer: %v", err)
+	}
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -169,36 +168,4 @@ func setupEnvOverrides(kubeconfig, namespaces, labelSelector, outputDir, resyncP
 	if logLevel != "" {
 		_ = os.Setenv("SIDECAR_LOG_LEVEL", logLevel)
 	}
-}
-
-// parseLabelSelector 解析 label selector 字符串为 map
-func parseLabelSelector(labelSelector string) map[string]string {
-	selectorMap := make(map[string]string)
-	pairs := strings.Split(labelSelector, ",")
-	for _, pair := range pairs {
-		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
-		if len(parts) == 2 {
-			selectorMap[parts[0]] = parts[1]
-		}
-	}
-	return selectorMap
-}
-
-// labelSelectorToJSON 将 label selector map 转换为 JSON 字符串
-func labelSelectorToJSON(selector map[string]string) string {
-	if len(selector) == 0 {
-		return "{}"
-	}
-
-	result := "{"
-	first := true
-	for k, v := range selector {
-		if !first {
-			result += ","
-		}
-		result += fmt.Sprintf(`"%s":"%s"`, k, v)
-		first = false
-	}
-	result += "}"
-	return result
 }
