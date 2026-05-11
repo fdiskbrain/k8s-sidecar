@@ -32,6 +32,7 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  PLATFORMS: ${{ vars.PLATFORMS }}
 
 
 jobs:
@@ -81,7 +82,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           annotations: |
-            org.opencontainers.image.description='k8s-sidecar multi-arch'
+            org.opencontainers.image.description= "${{ github.repository }} multi-arch"
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
@@ -92,7 +93,7 @@ jobs:
         uses: docker/build-push-action@v7 # v7.0.0
         with:
           context: .
-          platforms: linux/amd64,linux/arm64 # ${{ env.PLATFORMS }}
+          platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
