@@ -150,6 +150,21 @@ git push origin v1.0.0
 
 ## 配置说明
 
+k8s-sidecar 使用 [Viper](https://github.com/spf13/viper) 进行配置管理，支持多种配置源和灵活的优先级机制。
+
+### 📚 详细文档
+
+- 📖 **[完整配置指南](CONFIG_GUIDE.md)** - 详细的配置说明、示例和最佳实践
+- ⚡ **[快速参考](CONFIG_QUICKREF.md)** - 常用配置速查表
+- 📋 **[配置示例](examples/config.yaml.example)** - 完整的 YAML 配置模板
+- 🔧 **[优化总结](CONFIG_OPTIMIZATION_SUMMARY.md)** - Viper 重构说明
+
+### 配置优先级
+
+```
+命令行参数 > 环境变量 > 配置文件 > 默认值
+```
+
 ### 命令行参数
 
 | 参数 | 简写 | 说明 | 默认值 |
@@ -162,30 +177,114 @@ git push origin v1.0.0
 | `--log-level` | `-v` | 日志级别 | `info` |
 | `--config` | `-c` | 配置文件路径 | `/etc/sidecar/config.yaml` |
 
+**示例**:
+```bash
+./bin/k8s-sidecar \
+  --namespaces="default,production" \
+  --label-selector="app=myapp,type=config" \
+  --output-dir="/etc/config" \
+  --log-level="info"
+```
+
 ### 环境变量
+
+支持两种格式的环境变量：
+
+#### 推荐格式（带 SIDECAR_ 前缀）
 
 | 变量名 | 说明 | 默认值 |
 |-------|------|--------|
-| `KUBECONFIG` | kubeconfig 路径 | `""` |
-| `NAMESPACES` | 命名空间列表 | `default` |
-| `LABEL_SELECTOR` | Label 选择器（JSON） | 必填 |
-| `OUTPUT_DIR` | 输出目录 | `/etc/config` |
-| `LOG_LEVEL` | 日志级别 | `info` |
+| `SIDECAR_KUBECONFIG` | kubeconfig 路径 | `""` |
+| `SIDECAR_NAMESPACES` | 命名空间列表（逗号分隔） | `default` |
+| `SIDECAR_LABEL_SELECTOR` | Label 选择器（JSON） | 必填 |
+| `SIDECAR_OUTPUT_DIR` | 输出目录 | `/etc/config` |
+| `SIDECAR_RESYNC_PERIOD` | Resync 周期 | `10m` |
+| `SIDECAR_LOG_LEVEL` | 日志级别 | `info` |
 
-### 配置文件示例
+#### 兼容格式（无前缀）
 
+| 变量名 | 说明 |
+|-------|------|
+| `KUBECONFIG` | kubeconfig 路径 |
+| `NAMESPACES` | 命名空间列表 |
+| `LABEL_SELECTOR` | Label 选择器（JSON） |
+| `OUTPUT_DIR` | 输出目录 |
+| `RESYNC_PERIOD` | Resync 周期 |
+| `LOG_LEVEL` | 日志级别 |
+
+**示例**:
+```bash
+export SIDECAR_NAMESPACES="default,production"
+export SIDECAR_LABEL_SELECTOR='{"app":"myapp","type":"config"}'
+export SIDECAR_OUTPUT_DIR="/etc/config"
+export SIDECAR_RESYNC_PERIOD="5m"
+export SIDECAR_LOG_LEVEL="debug"
+
+./bin/k8s-sidecar
 ```
+
+### 配置文件
+
+程序会自动在以下位置查找配置文件（按顺序）：
+
+1. `/etc/k8s-sidecar/config.yaml`
+2. `./config.yaml` (当前目录)
+3. `$HOME/.k8s-sidecar/config.yaml`
+
+也可以通过 `--config` 参数指定路径。
+
+**支持的格式**: YAML、JSON、TOML
+
+**完整示例** ([查看模板](examples/config.yaml.example)):
+
+```yaml
+# Kubernetes kubeconfig 路径（空表示 In-Cluster 模式）
 kubeconfig: ""
+
+# 要监控的命名空间
 namespaces:
   - default
   - production
+
+# Label 选择器
 labelSelector:
   app: myapp
   type: config
+
+# 输出目录
 outputDir: "/etc/config"
+
+# 同步周期（支持 ns, us, ms, s, m, h）
 resyncPeriod: "10m"
+
+# 日志级别（debug, info, warn, error, fatal）
 logLevel: "info"
 ```
+
+### 混合使用示例
+
+可以在配置文件中设置基础配置，通过环境变量覆盖特定值：
+
+**config.yaml**:
+```yaml
+labelSelector:
+  app: myapp
+outputDir: "/etc/config"
+```
+
+**启动命令**:
+```bash
+export SIDECAR_NAMESPACES="production"
+export SIDECAR_LOG_LEVEL="debug"
+./bin/k8s-sidecar --config=config.yaml
+```
+
+最终配置：
+- `namespaces`: `["production"]` (来自环境变量)
+- `labelSelector`: `{"app": "myapp"}` (来自配置文件)
+- `outputDir`: `"/etc/config"` (来自配置文件)
+- `logLevel`: `"debug"` (来自环境变量)
+- 其他字段使用默认值
 
 ## 文件同步规则
 
