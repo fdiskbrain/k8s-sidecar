@@ -72,7 +72,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           annotations: |
-            org.opencontainers.image.description='Sts server multi-arch'
+            org.opencontainers.image.description='k8s-sidecar multi-arch'
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
 
@@ -87,6 +87,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
