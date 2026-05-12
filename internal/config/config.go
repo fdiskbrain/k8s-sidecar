@@ -57,10 +57,9 @@ func LoadConfig(configFile string) (*Config, error) {
 
 	// 读取配置文件（如果存在）
 	if err := v.ReadInConfig(); err != nil {
-		// 配置文件不存在不是错误，继续使用其他配置源
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, fmt.Errorf("failed to read config file: %w", err)
-		}
+		// 配置文件不存在或读取失败不是致命错误，继续使用其他配置源
+		// 记录警告但不中断程序执行
+		fmt.Printf("Warning: Config file not found or unreadable (%v). Using environment variables and defaults.\n", err)
 	}
 
 	// 绑定环境变量
