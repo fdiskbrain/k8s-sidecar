@@ -1,23 +1,28 @@
-# K8s ConfigMap Sidecar 配置示例
+# k8s-sidecar 配置文件示例
+# 支持 YAML、JSON、TOML 格式
+# 配置优先级: 命令行参数 > 环境变量 > 配置文件 > 默认值
 
-# kubeconfig 路径（空字符串表示使用 in-cluster 模式）
+# Kubernetes kubeconfig 文件路径（可选，为空时使用 In-Cluster 模式）
 kubeconfig: ""
 
 # 要监控的命名空间列表
-namespaces: 
-  -  monitoring
-#  - production
+# 使用 "*" 表示所有命名空间
+namespaces:
+  - default
+  - production
 
-# Label 选择器
+# Label 选择器 - 只同步带有这些标签的 ConfigMap
 labelSelector:
-  app.kubernetes.io/name: grafana
-# type: config
+  app: grafana
+  type: dashboard
 
 # 配置文件输出目录
-outputDir: "/tmp/config"
+outputDir: "/etc/config"
 
 # Informer 重新同步周期
+# 支持的时间单位: ns, us (或 µs), ms, s, m, h
 resyncPeriod: "10m"
 
-# 日志级别 (debug, info, warn, error)
+# 日志级别
+# 可选值: debug, info, warn, error, fatal
 logLevel: "info"

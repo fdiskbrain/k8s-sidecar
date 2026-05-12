@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -38,9 +38,9 @@ func main() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to kubeconfig file")
 	flag.StringVar(&namespaces, "namespaces", "", "Comma-separated list of namespaces to watch (use '*' for all)")
 	flag.StringVar(&labelSelector, "label-selector", "", "Label selector (e.g., 'app=myapp,type=config')")
-	flag.StringVar(&outputDir, "output-dir", "/etc/config", "Directory to write config files")
-	flag.StringVar(&resyncPeriod, "resync-period", "10m0s", "Informer resync period")
-	flag.StringVar(&logLevel, "log-level", "info", "Log level (debug, info, warn, error)")
+	flag.StringVar(&outputDir, "output-dir", "", "Directory to write config files")
+	flag.StringVar(&resyncPeriod, "resync-period", "", "Informer resync period (e.g., 10m, 5s)")
+	flag.StringVar(&logLevel, "log-level", "", "Log level (debug, info, warn, error)")
 	flag.StringVar(&configFile, "config", "/etc/sidecar/config.yaml", "Path to config file")
 	flag.BoolVar(&version, "version", false, "Print version and exit")
 	flag.Parse()
@@ -50,8 +50,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// 加载配置
-	cfg, err := loadConfig(configFile, kubeconfig, namespaces, labelSelector, outputDir, resyncPeriod, logLevel)
+	// 如果提供了命令行参数，设置对应的环境变量以便 Viper 读取
+	setupEnvOverrides(kubeconfig, namespaces, labelSelector, outputDir, resyncPeriod, logLevel)
+
+	// 加载配置（Viper 会自动合并配置文件、环境变量和默认值）
+	cfg, err := config.LoadConfig(configFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
 		os.Exit(1)
@@ -73,6 +76,7 @@ func main() {
 		zap.Strings("namespaces", cfg.Namespaces),
 		zap.String("labelSelector", cfg.BuildLabelSelectorString()),
 		zap.String("outputDir", cfg.OutputDir),
+		zap.Duration("resyncPeriod", cfg.ResyncPeriod),
 	)
 
 	// 创建 Kubernetes 客户端
@@ -129,63 +133,39 @@ func main() {
 	log.Info("k8s-sidecar stopped")
 }
 
-// loadConfig 加载配置，合并配置文件和命令行参数
-func loadConfig(configFile, kubeconfig, namespaces, labelSelector, outputDir, resyncPeriod, logLevel string) (*config.Config, error) {
-	// 从配置文件加载（配置文件是可选的）
-	cfg, err := config.LoadConfig(configFile)
-	if err != nil {
-		// 如果配置文件不存在或加载失败，创建一个空配置
-		fmt.Printf("Warning: Failed to load config file %s: %v\n", configFile, err)
-		fmt.Println("Using command line parameters and defaults")
-		cfg = &config.Config{}
-	}
-
-	// 命令行参数优先级高于配置文件
+// setupEnvOverrides 将命令行参数转换为环境变量，让 Viper 能够读取
+// 命令行参数的优先级高于配置文件和环境变量
+func setupEnvOverrides(kubeconfig, namespaces, labelSelector, outputDir, resyncPeriod, logLevel string) {
 	if kubeconfig != "" {
-		cfg.KubeConfig = kubeconfig
+		_ = os.Setenv("SIDECAR_KUBECONFIG", kubeconfig)
 	}
 
 	if namespaces != "" {
-		nsList := strings.Split(namespaces, ",")
-		for i := range nsList {
-			nsList[i] = strings.TrimSpace(nsList[i])
-		}
-		cfg.Namespaces = nsList
+		_ = os.Setenv("SIDECAR_NAMESPACES", namespaces)
 	}
 
 	if labelSelector != "" {
-		// 解析 label selector 字符串为 map
-		selectorMap := make(map[string]string)
-		pairs := strings.Split(labelSelector, ",")
-		for _, pair := range pairs {
-			parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
-			if len(parts) == 2 {
-				selectorMap[parts[0]] = parts[1]
-			}
+		// 直接设置原始字符串，由 LoadConfig 统一解析
+		// 支持两种格式：
+		// 1. JSON 格式: {"app":"grafana","type":"dashboard"}
+		// 2. key=value 格式: app=grafana,type=dashboard
+		_ = os.Setenv("SIDECAR_LABEL_SELECTOR", labelSelector)
+	}
+
+	if outputDir != "" {
+		_ = os.Setenv("SIDECAR_OUTPUT_DIR", outputDir)
+	}
+
+	if resyncPeriod != "" {
+		// 验证 duration 格式
+		if _, err := time.ParseDuration(resyncPeriod); err == nil {
+			_ = os.Setenv("SIDECAR_RESYNC_PERIOD", resyncPeriod)
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: Invalid resync period '%s': %v\n", resyncPeriod, err)
 		}
-		cfg.LabelSelector = selectorMap
 	}
 
-	if outputDir != "/etc/config" { // 如果不是默认值
-		cfg.OutputDir = outputDir
+	if logLevel != "" {
+		_ = os.Setenv("SIDECAR_LOG_LEVEL", logLevel)
 	}
-
-	if resyncPeriod != "10m0s" { // 如果不是默认值
-		// 这里简化处理，实际应该解析 duration 字符串
-		// 可以使用 time.ParseDuration
-		// TODO: 支持自定义 resync period
-		_ = resyncPeriod // 避免未使用变量警告
-	}
-
-	if logLevel != "info" { // 如果不是默认值
-		cfg.LogLevel = logLevel
-	}
-
-	// 应用默认值并验证配置
-	config.ApplyDefaults(cfg)
-	if err := config.ValidateConfigPublic(cfg); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %w", err)
-	}
-
-	return cfg, nil
 }

@@ -7,135 +7,163 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
 )
 
 // Config 应用配置结构
 type Config struct {
 	// KubeConfig kubeconfig 文件路径（可选，为空时使用 In Cluster 模式）
-	KubeConfig string `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty"`
+	KubeConfig string `mapstructure:"kubeconfig" json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty"`
 
 	// Namespaces 要监控的命名空间列表
 	// 支持特殊值 "*" 表示所有命名空间
-	Namespaces []string `json:"namespaces" yaml:"namespaces"`
+	Namespaces []string `mapstructure:"namespaces" json:"namespaces" yaml:"namespaces"`
 
 	// LabelSelector label 选择器
-	LabelSelector map[string]string `json:"labelSelector" yaml:"labelSelector"`
+	LabelSelector map[string]string `mapstructure:"labelSelector" json:"labelSelector" yaml:"labelSelector"`
 
 	// OutputDir 配置文件输出目录
-	OutputDir string `json:"outputDir" yaml:"outputDir" default:"/etc/config"`
+	OutputDir string `mapstructure:"outputDir" json:"outputDir" yaml:"outputDir"`
 
 	// ResyncPeriod Informer 重新同步周期（默认 10 分钟）
-	ResyncPeriod time.Duration `json:"resyncPeriod" yaml:"resyncPeriod" default:"10m"`
+	ResyncPeriod time.Duration `mapstructure:"resyncPeriod" json:"resyncPeriod" yaml:"resyncPeriod"`
 
 	// LogLevel 日志级别
-	LogLevel string `json:"logLevel" yaml:"logLevel" default:"info"`
+	LogLevel string `mapstructure:"logLevel" json:"logLevel" yaml:"logLevel"`
 }
 
-// LoadConfig 从多个来源加载配置，优先级：环境变量 > 配置文件 > 命令行参数 > 默认值
+// LoadConfig 从多个来源加载配置，优先级：命令行参数 > 环境变量 > 配置文件 > 默认值
 func LoadConfig(configFile string) (*Config, error) {
-	cfg := &Config{}
+	v := viper.New()
 
-	// 1. 应用默认值
-	applyDefaults(cfg)
-
-	// 2. 从配置文件加载（如果存在）
+	// 设置配置名称和类型
 	if configFile != "" {
-		if err := loadFromFile(cfg, configFile); err != nil {
-			// 配置文件不存在或读取失败是警告，不是错误
-			fmt.Printf("Warning: Failed to load config file %s: %v\n", configFile, err)
-			// 继续使用默认值和后续的配置源
+		v.SetConfigFile(configFile)
+	} else {
+		// 默认在以下位置查找配置文件
+		v.SetConfigName("config")
+		v.SetConfigType("yaml")
+		v.AddConfigPath("/etc/k8s-sidecar")
+		v.AddConfigPath(".")
+		v.AddConfigPath("$HOME/.k8s-sidecar")
+	}
+
+	// 启用环境变量支持
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// 设置环境变量前缀（可选）
+	v.SetEnvPrefix("SIDECAR")
+
+	// 读取配置文件（如果存在）
+	if err := v.ReadInConfig(); err != nil {
+		// 配置文件不存在不是错误，继续使用其他配置源
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
 	}
 
-	// 3. 从环境变量覆盖
-	loadFromEnv(cfg)
+	// 绑定环境变量
+	bindEnvVars(v)
 
-	// 4. 注意：不在这里验证，因为命令行参数可能会填充必填字段
-	// 验证应该在所有配置源合并后进行
+	// 预处理环境变量中的特殊格式
+	preprocessEnvVars(v)
+
+	// 设置默认值
+	setDefaults(v)
+
+	// 反序列化配置到结构体
+	cfg := &Config{}
+	if err := v.Unmarshal(cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// 验证配置
+	if err := validateConfig(cfg); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
 
 	return cfg, nil
 }
 
-// ApplyDefaults 应用默认值（导出版本，供外部调用）
-func ApplyDefaults(cfg *Config) {
-	applyDefaults(cfg)
+// bindEnvVars 绑定环境变量到配置项
+func bindEnvVars(v *viper.Viper) {
+	// 显式绑定关键环境变量
+	_ = v.BindEnv("kubeconfig", "KUBECONFIG", "SIDECAR_KUBECONFIG")
+	_ = v.BindEnv("namespaces", "NAMESPACES", "SIDECAR_NAMESPACES")
+	_ = v.BindEnv("labelSelector", "LABEL_SELECTOR", "SIDECAR_LABEL_SELECTOR")
+	_ = v.BindEnv("outputDir", "OUTPUT_DIR", "SIDECAR_OUTPUT_DIR")
+	_ = v.BindEnv("resyncPeriod", "RESYNC_PERIOD", "SIDECAR_RESYNC_PERIOD")
+	_ = v.BindEnv("logLevel", "LOG_LEVEL", "SIDECAR_LOG_LEVEL")
 }
 
-// applyDefaults 应用默认值
-func applyDefaults(cfg *Config) {
-	if cfg.OutputDir == "" {
-		cfg.OutputDir = "/etc/config"
-	}
-	if cfg.ResyncPeriod == 0 {
-		cfg.ResyncPeriod = 10 * time.Minute
-	}
-	if cfg.LogLevel == "" {
-		cfg.LogLevel = "info"
-	}
-	if len(cfg.Namespaces) == 0 {
-		cfg.Namespaces = []string{"default"}
-	}
-}
-
-// loadFromFile 从 YAML 配置文件加载
-func loadFromFile(cfg *Config, filePath string) error {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	return nil
-}
-
-// loadFromEnv 从环境变量加载配置
-func loadFromEnv(cfg *Config) {
-	// KUBECONFIG
-	if kubeconfig := os.Getenv("KUBECONFIG"); kubeconfig != "" {
-		cfg.KubeConfig = kubeconfig
-	}
-
-	// NAMESPACES
-	if namespaces := os.Getenv("NAMESPACES"); namespaces != "" {
-		cfg.Namespaces = strings.Split(namespaces, ",")
-		for i := range cfg.Namespaces {
-			cfg.Namespaces[i] = strings.TrimSpace(cfg.Namespaces[i])
+// preprocessEnvVars 在 Unmarshal 之前预处理环境变量中的特殊格式
+//
+// 由于 Viper 的 Unmarshal 无法自动处理某些类型转换（如 JSON 字符串到 map），
+// 需要在反序列化之前手动解析并设置到 Viper 实例中。
+//
+// 支持的转换：
+// - LABEL_SELECTOR: JSON 字符串或 key=value 格式 → map[string]string
+// - NAMESPACES: 逗号分隔字符串 → []string
+func preprocessEnvVars(v *viper.Viper) {
+	// 处理 LABEL_SELECTOR 环境变量（JSON 字符串或 key=value 格式 → map）
+	labelSelectorEnv := []string{"LABEL_SELECTOR", "SIDECAR_LABEL_SELECTOR"}
+	for _, envVar := range labelSelectorEnv {
+		if val := os.Getenv(envVar); val != "" {
+			var selector map[string]string
+			
+			// 尝试解析 JSON 格式
+			if val[0] == '{' {
+				if err := json.Unmarshal([]byte(val), &selector); err != nil {
+					fmt.Printf("Warning: Failed to parse %s as JSON: %v. Expected format: '{\"key\":\"value\"}'\n", envVar, err)
+					// 设置为空 map，避免 Unmarshal 失败
+					v.Set("labelSelector", make(map[string]string))
+					return
+				}
+			} else {
+				// 解析 key=value 格式 (如: app=grafana,type=dashboard)
+				selector = parseKeyValueFormat(val)
+			}
+			
+			v.Set("labelSelector", selector)
+			break
 		}
 	}
 
-	// LABEL_SELECTOR (JSON format)
-	if labelSelector := os.Getenv("LABEL_SELECTOR"); labelSelector != "" {
-		var selector map[string]string
-		if err := json.Unmarshal([]byte(labelSelector), &selector); err == nil {
-			cfg.LabelSelector = selector
+	// 处理 NAMESPACES 环境变量（逗号分隔字符串 → 数组）
+	namespacesEnv := []string{"NAMESPACES", "SIDECAR_NAMESPACES"}
+	for _, envVar := range namespacesEnv {
+		if val := os.Getenv(envVar); val != "" {
+			nsList := strings.Split(val, ",")
+			for i := range nsList {
+				nsList[i] = strings.TrimSpace(nsList[i])
+			}
+			v.Set("namespaces", nsList)
+			break
 		}
-	}
-
-	// OUTPUT_DIR
-	if outputDir := os.Getenv("OUTPUT_DIR"); outputDir != "" {
-		cfg.OutputDir = outputDir
-	}
-
-	// RESYNC_PERIOD
-	if resyncPeriod := os.Getenv("RESYNC_PERIOD"); resyncPeriod != "" {
-		if period, err := time.ParseDuration(resyncPeriod); err == nil {
-			cfg.ResyncPeriod = period
-		}
-	}
-
-	// LOG_LEVEL
-	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
-		cfg.LogLevel = logLevel
 	}
 }
 
-// ValidateConfigPublic 验证配置（导出版本，供外部调用）
-func ValidateConfigPublic(cfg *Config) error {
-	return validateConfig(cfg)
+// parseKeyValueFormat 解析 key=value 格式的字符串为 map
+// 例如: "app=grafana,type=dashboard" -> {"app": "grafana", "type": "dashboard"}
+func parseKeyValueFormat(s string) map[string]string {
+	result := make(map[string]string)
+	pairs := strings.Split(s, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(strings.TrimSpace(pair), "=", 2)
+		if len(parts) == 2 {
+			result[parts[0]] = parts[1]
+		}
+	}
+	return result
+}
+
+// setDefaults 设置默认值
+func setDefaults(v *viper.Viper) {
+	v.SetDefault("outputDir", "/etc/config")
+	v.SetDefault("resyncPeriod", "10m")
+	v.SetDefault("logLevel", "info")
+	v.SetDefault("namespaces", []string{"default"})
 }
 
 // validateConfig 验证配置
@@ -187,4 +215,17 @@ func (cfg *Config) BuildLabelSelectorString() string {
 // IsAllNamespaces 检查是否监控所有命名空间
 func (cfg *Config) IsAllNamespaces() bool {
 	return len(cfg.Namespaces) == 1 && cfg.Namespaces[0] == "*"
+}
+
+// String 返回配置的字符串表示（用于调试）
+func (cfg *Config) String() string {
+	return fmt.Sprintf(
+		"Config{KubeConfig: %s, Namespaces: %v, LabelSelector: %v, OutputDir: %s, ResyncPeriod: %v, LogLevel: %s}",
+		cfg.KubeConfig,
+		cfg.Namespaces,
+		cfg.LabelSelector,
+		cfg.OutputDir,
+		cfg.ResyncPeriod,
+		cfg.LogLevel,
+	)
 }
