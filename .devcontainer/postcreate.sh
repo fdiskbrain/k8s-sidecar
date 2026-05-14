@@ -10,8 +10,8 @@ if [ -f /etc/os-release ]; then
             # 处理新版 Debian (Bookworm+) 使用 sources.list.d 下的 deb822 格式
             if [ -f /etc/apt/sources.list.d/debian.sources ]; then
                 echo "Updating /etc/apt/sources.list.d/debian.sources..."
-                sed -i 's|https://deb.debian.org|https://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
-                sed -i 's|https://security.debian.org|https://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+                sed -i 's|http://deb.debian.org|https://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources     
+                sed -i 's|http://security.debian.org|https://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
             fi
 
             # 处理传统 sources.list 文件 (兼容旧版或 Ubuntu)
@@ -58,7 +58,7 @@ fi
 # Install glab (GitLab CLI tool)
 echo "Installing glab (GitLab CLI)..."
 GLAB_VERSION="1.95.0"
-GLAB_URL="https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_$(go env GOARCH).deb"
+GLAB_URL="https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_$(/usr/local/go//bin/go env GOARCH).deb"
 
 # Download with timeout and error handling
 if wget -q --timeout=30 "${GLAB_URL}" -O /tmp/glab.deb; then

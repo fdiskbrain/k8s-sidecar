@@ -110,7 +110,7 @@ func preprocessEnvVars(v *viper.Viper) {
 	for _, envVar := range labelSelectorEnv {
 		if val := os.Getenv(envVar); val != "" {
 			var selector map[string]string
-			
+
 			// 尝试解析 JSON 格式
 			if val[0] == '{' {
 				if err := json.Unmarshal([]byte(val), &selector); err != nil {
@@ -123,7 +123,7 @@ func preprocessEnvVars(v *viper.Viper) {
 				// 解析 key=value 格式 (如: app=grafana,type=dashboard)
 				selector = parseKeyValueFormat(val)
 			}
-			
+
 			v.Set("labelSelector", selector)
 			break
 		}

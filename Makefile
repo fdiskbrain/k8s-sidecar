@@ -11,7 +11,7 @@ PLATFORMS?=linux/amd64,linux/arm64,linux/arm/v7
 # Go commands
 GO_BUILD=go build
 GO_TEST=go test
-GO_FMT=gofmt
+GO_FMT=go fmt
 GO_VET=go vet
 
 # Flags
