@@ -32,7 +32,7 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  PLATFORMS: ${{ vars.PLATFORMS }}
+  PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
 
 
 jobs:
